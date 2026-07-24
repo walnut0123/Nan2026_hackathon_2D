@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f257b2bf1ae052499c02580e5a83130, type: 3}
+  m_Name: Card_9D
+  m_EditorClassIdentifier: 
+  itemId: card_9d
+  itemName: "\uB2E4\uC774\uC544\uBAAC\uB4DC 9"
+  description: 
+  icon: {fileID: 21300000, guid: 4b4a7cd6c8aaab143b5e675d9dcb64dc, type: 3}
+  itemType: 5
+  maxStackCount: 1
+  worldPrefab: {fileID: 8977982078154026358, guid: 60bc702e10aa5ca48aac1301859a40f5, type: 3}
+  isCombinable: 0
+  cardValue: 9

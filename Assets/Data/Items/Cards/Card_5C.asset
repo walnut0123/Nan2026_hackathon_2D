@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f257b2bf1ae052499c02580e5a83130, type: 3}
+  m_Name: Card_5C
+  m_EditorClassIdentifier: 
+  itemId: card_5c
+  itemName: "\uD074\uB7FD 5"
+  description: 
+  icon: {fileID: 21300000, guid: e33a10ee771ee6f4b9a2deb6df714b6a, type: 3}
+  itemType: 5
+  maxStackCount: 1
+  worldPrefab: {fileID: 574293284478714832, guid: 770e86b0b99212343b93a0ccd34d8113, type: 3}
+  isCombinable: 0
+  cardValue: 5

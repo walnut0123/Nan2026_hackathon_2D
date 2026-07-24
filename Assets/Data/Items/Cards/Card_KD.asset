@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f257b2bf1ae052499c02580e5a83130, type: 3}
+  m_Name: Card_KD
+  m_EditorClassIdentifier: 
+  itemId: card_kd
+  itemName: "\uB2E4\uC774\uC544\uBAAC\uB4DC \uD0B9"
+  description: 
+  icon: {fileID: 21300000, guid: a940220d879cb1b40922226391effd1f, type: 3}
+  itemType: 5
+  maxStackCount: 1
+  worldPrefab: {fileID: 8700036209985147303, guid: db5585944d861764983dadbd1ec827da, type: 3}
+  isCombinable: 0
+  cardValue: 13
