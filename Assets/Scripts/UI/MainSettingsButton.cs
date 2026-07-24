@@ -34,14 +34,32 @@ public class MainSettingsButton : MonoBehaviour
         sfxSlider.onValueChanged.AddListener(v => AudioManager.Instance?.SetSfxVolume(v));
 
         card.Find("SaveAndExitButton").GetComponent<Button>().onClick.AddListener(OnSaveAndExit);
-        card.Find("CloseButton").GetComponent<Button>().onClick.AddListener(() => settingsPanel.SetActive(false));
+        card.Find("CloseButton").GetComponent<Button>().onClick.AddListener(OnCloseClicked);
     }
 
-    private void OnSettingsClicked() => settingsPanel.SetActive(true);
+    // Settings panel doubles as a pause menu: opening it freezes gameplay (Time.timeScale = 0),
+    // which also halts anything driven by scaled time - player movement, CardProjectile flight,
+    // ItemBob - without needing to touch those scripts individually.
+    private void OnSettingsClicked()
+    {
+        settingsPanel.SetActive(true);
+        // Sibling order (not just Canvas.sortingOrder) decides draw order among UI within the
+        // same Canvas - without this, panels/prompts authored after SettingsPanel in the
+        // hierarchy (e.g. InteractionPromptUI) would still render on top of it.
+        settingsPanel.transform.SetAsLastSibling();
+        Time.timeScale = 0f;
+    }
+
+    private void OnCloseClicked()
+    {
+        settingsPanel.SetActive(false);
+        Time.timeScale = 1f;
+    }
 
     private void OnSaveAndExit()
     {
         settingsPanel.SetActive(false);
+        Time.timeScale = 1f;
         GameManager.Instance.SaveAndExitToTitle();
     }
 }

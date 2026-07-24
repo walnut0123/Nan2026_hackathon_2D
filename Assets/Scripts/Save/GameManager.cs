@@ -106,6 +106,12 @@ public class GameManager : MonoBehaviour
             });
         }
 
+        if (CardInventory.Instance != null)
+        {
+            foreach (var card in CardInventory.Instance.Slots)
+                data.cardSlotItemIds.Add(card != null ? card.itemId : string.Empty);
+        }
+
         data.removedWorldObjectIds.AddRange(removedWorldObjectIds);
 
         foreach (var marker in FindObjectsOfType<DroppedItemMarker>())
@@ -137,6 +143,10 @@ public class GameManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        // Guard against Time.timeScale being left at 0 (e.g. settings/pause menu left open
+        // across a scene transition) - every scene should start unpaused.
+        Time.timeScale = 1f;
+
         if (scene.name != MainSceneName)
             return;
 
@@ -185,6 +195,31 @@ public class GameManager : MonoBehaviour
         }
 
         playerInventory.Inventory.NotifyChanged();
+
+        if (CardInventory.Instance != null)
+        {
+            CardInventory.Instance.Clear();
+            if (itemDatabase != null)
+            {
+                for (int i = 0; i < data.cardSlotItemIds.Count && i < CardInventory.SlotCount; i++)
+                {
+                    string cardId = data.cardSlotItemIds[i];
+                    if (string.IsNullOrEmpty(cardId))
+                        continue;
+
+                    var card = itemDatabase.GetItemById(cardId);
+                    if (card == null)
+                    {
+                        Debug.LogWarning($"[GameManager] Save references unknown card itemId '{cardId}'; skipping.");
+                        continue;
+                    }
+
+                    CardInventory.Instance.SetSlot(i, card);
+                }
+            }
+
+            CardInventory.Instance.NotifyChanged();
+        }
 
         removedWorldObjectIds.Clear();
         removedWorldObjectIds.UnionWith(data.removedWorldObjectIds);

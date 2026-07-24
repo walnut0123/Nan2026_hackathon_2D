@@ -27,6 +27,10 @@ public class SaveData
     public float playerPosZ;
     public List<InventorySlotSaveData> inventorySlots = new List<InventorySlotSaveData>();
 
+    /// <summary>CardInventory's 5 slots, by itemId ("" = empty). Cards live in a separate
+    /// inventory from the general one, so they need their own save slot list.</summary>
+    public List<string> cardSlotItemIds = new List<string>();
+
     /// <summary>IDs (PersistentWorldEntity.Id) of pre-placed monsters/pickups that were
     /// killed or picked up, so they don't reappear on load.</summary>
     public List<string> removedWorldObjectIds = new List<string>();

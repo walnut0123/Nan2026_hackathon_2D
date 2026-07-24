@@ -56,4 +56,22 @@ public class CardInventory : MonoBehaviour
 
         return false;
     }
+
+    /// <summary>Directly places a card into a slot by index, bypassing the "first empty
+    /// slot" rule of TryAddCard. Used by the save system to restore exact slot layout.</summary>
+    public void SetSlot(int index, ItemData card)
+    {
+        if (index < 0 || index >= slots.Length)
+            return;
+
+        slots[index] = card;
+    }
+
+    public void Clear()
+    {
+        for (int i = 0; i < slots.Length; i++)
+            slots[i] = null;
+    }
+
+    public void NotifyChanged() => OnChanged?.Invoke();
 }
