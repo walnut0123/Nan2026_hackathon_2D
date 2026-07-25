@@ -3,8 +3,8 @@ using UnityEngine;
 public class CardProjectile : MonoBehaviour
 {
     // 이동 속도 및 판정 범위
-    private float speed = 15.0f;
-    private float hitThreshold = 0.2f;
+    private float speed = 5.859375f;
+    private float hitThreshold = 0.078125f;
 
     // 타겟 조준 높이 보정 (2D에서는 Y축 = 화면상 위쪽)
     private float targetHeightOffset = 0f;
@@ -14,7 +14,7 @@ public class CardProjectile : MonoBehaviour
     [SerializeField] private float rotationOffsetDegrees = -90f;
 
     // 데미지 = 기본 데미지 + 현재 보유 중인 카드 5칸의 합(CardInventory.TotalCardValue).
-    [SerializeField] private int baseDamage = 5;
+    [SerializeField] private int baseDamage = 1;
 
     private Transform targetTransform;
     private Vector3 targetPosition;
