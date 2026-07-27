@@ -35,10 +35,28 @@ public class CardAutoAttack : MonoBehaviour
     private Transform currentTarget;
     public Transform CurrentTarget => currentTarget;
 
+    // 플레이어가 화면을 클릭해서 직접 지정한 우선 타겟 (위험도 높은 적을 수동으로 집중 공격하기 위함).
+    // 사거리 밖으로 나가도 유지되며(다시 들어오면 재우선), 죽거나(파괴됨) 콜라이더가 꺼지면(사망 연출)
+    // 자동으로 해제되어 일반 자동 타겟팅으로 돌아간다. 빈 곳을 클릭하면 즉시 해제된다.
+    private Transform manualTarget;
+    private Collider2D manualTargetCollider;
+
     // Physics2D.OverlapCircleNonAlloc 최적화용 버퍼
     private Collider2D[] hitColliders = new Collider2D[20];
     private float searchTimer = 0f;
     private float attackTimer = 0f;
+
+    /// <summary>화면 클릭으로 지정된 우선 타겟을 설정한다. null을 넘기면 해제(자동 타겟팅으로 복귀).</summary>
+    public void SetManualTarget(Transform target)
+    {
+        manualTarget = target;
+        manualTargetCollider = target != null ? target.GetComponent<Collider2D>() : null;
+
+        if (manualTarget != null)
+            Debug.Log($"[CardAutoAttack] 우선 타겟 지정: {manualTarget.name}");
+        else
+            Debug.Log("[CardAutoAttack] 우선 타겟 해제 - 자동 타겟팅으로 복귀");
+    }
 
     private void Update()
     {
@@ -78,6 +96,30 @@ public class CardAutoAttack : MonoBehaviour
 
     private void FindNearestTarget()
     {
+        // 수동 지정 타겟이 죽지 않고(콜라이더 활성) 사거리 안에 있으면 자동 탐색보다 우선한다.
+        // 사거리를 벗어나면 그동안은 자동 타겟팅으로 넘어가되, manualTarget 자체는 계속 기억해뒀다가
+        // 다시 사거리에 들어오면 재우선한다 - 죽거나(파괴/콜라이더 비활성) 빈 곳을 클릭해야만 완전히 해제된다.
+        bool manualTargetAlive = manualTarget != null && manualTargetCollider != null && manualTargetCollider.enabled;
+        if (!manualTargetAlive && manualTarget != null)
+        {
+            manualTarget = null;
+            manualTargetCollider = null;
+        }
+
+        if (manualTargetAlive)
+        {
+            float distanceToManual = Vector3.Distance(transform.position, manualTarget.position);
+            if (distanceToManual <= attackRange)
+            {
+                if (currentTarget != manualTarget)
+                {
+                    currentTarget = manualTarget;
+                    Debug.Log($"[CardAutoAttack] 우선 타겟 공격 중: {currentTarget.name} (거리: {distanceToManual:F2}m)");
+                }
+                return;
+            }
+        }
+
         int numFound = Physics2D.OverlapCircleNonAlloc(transform.position, attackRange, hitColliders);
 
         Transform nearestEnemy = null;

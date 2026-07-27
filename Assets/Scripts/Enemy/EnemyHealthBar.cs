@@ -38,6 +38,10 @@ public class EnemyHealthBar : MonoBehaviour
     [SerializeField] private float whiteTrailHoldDelay = 0.4f;
     [Tooltip("대기가 끝난 뒤 흰색 잔여 체력이 실제 체력 위치까지 줄어드는 데 걸리는 시간(초)")]
     [SerializeField] private float whiteTrailDrainDuration = 0.25f;
+    [Tooltip("히트가 whiteTrailHoldDelay보다 촘촘하게 계속 들어오면(여러 적에게 동시에 맞는 등) " +
+        "대기가 끝없이 밀려서 흰색이 영원히 안 사라지는 것을 막는 상한(초) - 이 그룹의 첫 히트로부터 " +
+        "이 시간이 지나면, 더 맞고 있어도 강제로 드레인을 시작한다.")]
+    [SerializeField] private float whiteTrailMaxHoldWindow = 1.5f;
 
     private Health health;
     private Transform barRoot;
@@ -48,6 +52,8 @@ public class EnemyHealthBar : MonoBehaviour
     private Coroutine punchScaleRoutine;
     private Coroutine whiteTrailRoutine;
     private float lastPunchTime = float.NegativeInfinity;
+    private float lastWhiteTrailHitTime;
+    private float firstWhiteTrailHitTimeInGroup = float.NegativeInfinity;
 
     private void Awake()
     {
@@ -150,6 +156,16 @@ public class EnemyHealthBar : MonoBehaviour
             float currentWhiteWidth = whiteTrailRenderer.transform.localScale.x;
             SetWhiteTrailWidth(Mathf.Max(currentWhiteWidth, oldFillWidth));
 
+            // 이전 그룹이 이미 상한을 넘겨서 끝난 상태였다면(또는 그룹이 아예 없었다면) 새 그룹 시작.
+            // bool 플래그 대신 경과 시간으로만 판단하므로, 코루틴이 중간에 죽는 예외적인 상황에서도
+            // "영원히 true로 고착"되는 상태 자체가 존재하지 않는다.
+            if (Time.time - firstWhiteTrailHitTimeInGroup >= whiteTrailMaxHoldWindow)
+                firstWhiteTrailHitTimeInGroup = Time.time;
+
+            lastWhiteTrailHitTime = Time.time;
+
+            // 매 히트마다 항상 재시작 - 이전 코루틴이 어떤 이유로든 이미 죽어있었어도(핸들이 낡았어도)
+            // StopCoroutine은 안전하게 무시되고, 새 코루틴이 확실히 스케줄된다.
             if (whiteTrailRoutine != null)
                 StopCoroutine(whiteTrailRoutine);
             whiteTrailRoutine = StartCoroutine(WhiteTrailDrainEffect());
@@ -175,12 +191,20 @@ public class EnemyHealthBar : MonoBehaviour
         punchScaleRoutine = null;
     }
 
-    // 기능 2: whiteTrailHoldDelay만큼 대기한 뒤(그 사이 새 히트가 오면 HandleDamaged가 이 코루틴을
-    // 멈추고 새로 시작시키므로 자연히 대기가 연장된다), 흰색 잔여 체력을 그 시점의 실제 체력(Fill) 폭까지
-    // whiteTrailDrainDuration에 걸쳐 서서히 줄인다.
+    // 기능 2: 마지막 히트로부터 whiteTrailHoldDelay만큼 조용해지면(또는 이 그룹의 첫 히트로부터
+    // whiteTrailMaxHoldWindow가 지나면 강제로), 흰색 잔여 체력을 그 시점의 실제 체력(Fill) 폭까지
+    // whiteTrailDrainDuration에 걸쳐 서서히 줄인다. HandleDamaged가 코루틴을 재시작하지 않고
+    // lastWhiteTrailHitTime만 갱신하므로, 이 while 루프가 알아서 대기를 연장한다 - 단, 상한을
+    // 넘으면 히트가 계속 들어와도 무시하고 드레인을 시작해서 "영원히 안 사라지는" 상황을 막는다.
     private IEnumerator WhiteTrailDrainEffect()
     {
-        yield return new WaitForSeconds(whiteTrailHoldDelay);
+        while (Time.time - lastWhiteTrailHitTime < whiteTrailHoldDelay
+            && Time.time - firstWhiteTrailHitTimeInGroup < whiteTrailMaxHoldWindow)
+        {
+            float quietRemaining = whiteTrailHoldDelay - (Time.time - lastWhiteTrailHitTime);
+            float capRemaining = whiteTrailMaxHoldWindow - (Time.time - firstWhiteTrailHitTimeInGroup);
+            yield return new WaitForSeconds(Mathf.Min(quietRemaining, capRemaining));
+        }
 
         float startWidth = whiteTrailRenderer.transform.localScale.x;
         float targetWidth = fillRenderer.transform.localScale.x;

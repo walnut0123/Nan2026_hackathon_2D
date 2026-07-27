@@ -2,25 +2,25 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>Wires up the in-game 설정(Settings) button and panel in the Main scene. Both are
-/// authored directly in the scene hierarchy (as siblings of InventoryPanel on the game
-/// Canvas) so they can be freely redesigned in the Editor - this script only finds them by
-/// name and hooks up behavior, it does not build any UI.</summary>
+/// authored directly in the scene hierarchy (as children of InGameCanvas) so they can be
+/// freely redesigned in the Editor - this script only finds them by name and hooks up
+/// behavior, it does not build any UI.</summary>
 public class MainSettingsButton : MonoBehaviour
 {
     private GameObject settingsPanel;
 
     private void Start()
     {
-        var inventoryUI = FindObjectOfType<InventoryUI>(true);
-        if (inventoryUI == null)
+        var canvas = FindObjectOfType<Canvas>();
+        if (canvas == null)
         {
-            Debug.LogWarning("[MainSettingsButton] No InventoryUI found in the Main scene; cannot wire up settings UI.");
+            Debug.LogWarning("[MainSettingsButton] No Canvas found in the Main scene; cannot wire up settings UI.");
             return;
         }
 
-        var canvasTransform = inventoryUI.transform.parent;
+        var canvasTransform = canvas.transform;
 
-        canvasTransform.Find("Btn_Settings").GetComponent<Button>().onClick.AddListener(OnSettingsClicked);
+        canvasTransform.Find("Btn_Pause").GetComponent<Button>().onClick.AddListener(OnSettingsClicked);
 
         settingsPanel = canvasTransform.Find("SettingsPanel").gameObject;
         var card = settingsPanel.transform.Find("Card");

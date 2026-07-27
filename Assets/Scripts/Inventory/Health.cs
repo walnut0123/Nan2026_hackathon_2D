@@ -34,7 +34,6 @@ public class Health : MonoBehaviour, IDamageable
 
         if (isInvincible)
         {
-            Debug.Log($"[Health] {gameObject.name} took {amount} damage but is invincible (무적)");
             OnDamaged?.Invoke(amount);
             return;
         }

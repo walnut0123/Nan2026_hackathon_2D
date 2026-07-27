@@ -7,6 +7,7 @@ using UnityEngine.InputSystem;
 public class Player : MonoBehaviour
 {
     private AgentMover AgentMover;
+    private CardAutoAttack cardAutoAttack;
 
     private Vector2 movementInput;
 
@@ -22,6 +23,10 @@ public class Player : MonoBehaviour
 
     [Tooltip("이펙트가 화면에 유지될 시간 (1초 권장)")]
     [SerializeField] private float effectDestroyTime = 1.0f;
+
+    [Header("타겟 락온 VFX")]
+    [Tooltip("적을 클릭해서 우선 타겟으로 지정했을 때 그 적 위에 표시할 락온 이펙트 프리팹")]
+    [SerializeField] private GameObject targetLockVfxPrefab;
 
     private void OnEnable()
     {
@@ -42,6 +47,7 @@ public class Player : MonoBehaviour
     void Awake()
     {
         AgentMover = GetComponent<AgentMover>();
+        cardAutoAttack = GetComponent<CardAutoAttack>();
     }
 
     void Update()
@@ -52,6 +58,12 @@ public class Player : MonoBehaviour
 
     private void OnShootPerformed(InputAction.CallbackContext context)
     {
+        Vector2 screenPos = pointerPosition.action.ReadValue<Vector2>();
+
+        // 클릭한 화면 위치에 적이 있으면 그 적을 우선 타겟으로 지정 (위험도 높은 적 수동 집중공격용).
+        // 적이 없는 빈 곳을 클릭하면 우선 타겟을 해제하고 자동 타겟팅으로 되돌린다.
+        TrySetClickedEnemyAsTarget(screenPos);
+
         // 전체용 Canvas 혹은 프리팹이 등록되지 않았다면 예외 처리
         if (globalCanvasTransform == null || clickEffectPrefab == null)
         {
@@ -61,8 +73,27 @@ public class Player : MonoBehaviour
 
         // 2D에서는 오소그래픽 카메라 화면 좌표가 바로 월드 좌표로 변환되므로
         // 3D 레이캐스트로 "바닥에 맞았는지" 확인할 필요가 없다 - 클릭 시 곧바로 이펙트 생성
-        Vector2 screenPos = pointerPosition.action.ReadValue<Vector2>();
         SpawnUIOverlayEffect(screenPos);
+    }
+
+    /// <summary>클릭한 화면 좌표를 월드 좌표로 변환해서 그 지점에 있는 콜라이더를 찾고, "Enemy" 태그면
+    /// CardAutoAttack의 우선 타겟으로 지정한다. 아무것도 없으면(빈 땅 클릭) 우선 타겟을 해제한다.</summary>
+    private void TrySetClickedEnemyAsTarget(Vector2 screenPosition)
+    {
+        if (cardAutoAttack == null || Camera.main == null)
+            return;
+
+        float camDistance = Mathf.Abs(Camera.main.transform.position.z);
+        Vector3 worldPos = Camera.main.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, camDistance));
+        worldPos.z = 0f;
+
+        Collider2D hit = Physics2D.OverlapPoint(worldPos);
+        bool clickedEnemy = hit != null && hit.CompareTag("Enemy");
+
+        cardAutoAttack.SetManualTarget(clickedEnemy ? hit.transform : null);
+
+        if (clickedEnemy && targetLockVfxPrefab != null)
+            Instantiate(targetLockVfxPrefab, hit.transform.position, Quaternion.identity, hit.transform);
     }
 
     private void SpawnUIOverlayEffect(Vector2 screenPosition)
