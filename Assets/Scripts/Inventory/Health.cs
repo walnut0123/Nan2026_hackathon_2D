@@ -9,6 +9,9 @@ public class Health : MonoBehaviour, IDamageable
     [Tooltip("사망 애니메이션 재생 시간 확보를 위한 파괴 지연(초). 0이면 기존처럼 즉시 파괴.")]
     [SerializeField] private float deathDestroyDelay = 0f;
 
+    [Tooltip("true면 피격 이벤트(데미지 텍스트/체력바/Hit 애니메이션)는 그대로 발생하지만 실제 체력은 줄지 않고 사망하지 않는다. 테스트용 더미 타겟(허수아비 등)에 사용.")]
+    [SerializeField] private bool isInvincible = false;
+
     private int currentHealth;
     private bool isDead;
 
@@ -28,6 +31,13 @@ public class Health : MonoBehaviour, IDamageable
     {
         if (isDead || amount <= 0)
             return;
+
+        if (isInvincible)
+        {
+            Debug.Log($"[Health] {gameObject.name} took {amount} damage but is invincible (무적)");
+            OnDamaged?.Invoke(amount);
+            return;
+        }
 
         currentHealth -= amount;
         Debug.Log($"[Health] {gameObject.name} took {amount} damage ({Mathf.Max(currentHealth, 0)}/{maxHealth})");

@@ -44,6 +44,14 @@ public class EnemyChaser : MonoBehaviour
 
     private void Start()
     {
+        var priorityTarget = FindObjectOfType<PriorityTarget>();
+        if (priorityTarget != null)
+        {
+            playerTransform = priorityTarget.transform;
+            playerCollider = priorityTarget.GetComponent<CircleCollider2D>();
+            return;
+        }
+
         var playerInventory = FindObjectOfType<PlayerInventory>();
         if (playerInventory != null)
         {
@@ -52,7 +60,7 @@ public class EnemyChaser : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[EnemyChaser] 씬에서 PlayerInventory(플레이어)를 찾을 수 없습니다.");
+            Debug.LogWarning("[EnemyChaser] 씬에서 타겟(PriorityTarget/PlayerInventory)을 찾을 수 없습니다.");
         }
     }
 

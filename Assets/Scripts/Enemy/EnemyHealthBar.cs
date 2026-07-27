@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 // Health의 OnDamaged/OnDeath 이벤트를 구독해서 적 머리 위에 체력바를 표시한다.
@@ -19,10 +20,34 @@ public class EnemyHealthBar : MonoBehaviour
     [Tooltip("체력바(배경/게이지)에 쓸 스프라이트. Inspector에서 반드시 연결 (예: Assets/Sprites/UI/WhitePixel.png)")]
     [SerializeField] private Sprite barSprite;
 
+    [Header("피격 연출 (번호로 구분 - 특정 기능만 나중에 빼기 쉽게)")]
+    [Tooltip("기능 1: 피격 시 체력바 전체가 순간 커졌다가 원래 크기로 돌아오는 펀치 스케일 효과")]
+    [SerializeField] private bool enablePunchScale = true;
+    [SerializeField] private float punchScaleMultiplier = 1.3f;
+    [SerializeField] private float punchScaleDuration = 0.15f;
+    [Tooltip("연속 히트(예: 카드 버스트) 중 너무 자주 재발동해서 정신없어 보이는 것을 막기 위한 최소 " +
+        "재발동 간격(초). 이 시간 안에 또 맞아도 펀치는 재시작하지 않는다.")]
+    [SerializeField] private float punchCooldown = 1f;
+
+    [Tooltip("기능 2: 피격 시 방금 잃은 체력만큼 흰색 잔여 체력(트레일)이 남아있다가, 잠시 후 " +
+        "서서히 줄어들며 사라지는 효과. 초록 게이지는 항상 즉시 갱신되고, 흰색 트레일이 그 뒤를 " +
+        "따라가듯 지연되어 줄어들면서 '방금 이만큼 잃었다'를 눈으로 보여준다.")]
+    [SerializeField] private bool enableWhiteTrail = true;
+    [Tooltip("흰색 잔여 체력이 줄어들기 시작하기까지의 대기 시간(초). 연속 히트가 들어오는 동안은 " +
+        "히트마다 이 대기가 다시 시작되어, 버스트가 끝날 때까지 흰색이 계속 쌓인 채로 유지된다.")]
+    [SerializeField] private float whiteTrailHoldDelay = 0.4f;
+    [Tooltip("대기가 끝난 뒤 흰색 잔여 체력이 실제 체력 위치까지 줄어드는 데 걸리는 시간(초)")]
+    [SerializeField] private float whiteTrailDrainDuration = 0.25f;
+
     private Health health;
     private Transform barRoot;
+    private Vector3 barRestScale;
     private Transform fillAnchor;
     private SpriteRenderer fillRenderer;
+    private SpriteRenderer whiteTrailRenderer;
+    private Coroutine punchScaleRoutine;
+    private Coroutine whiteTrailRoutine;
+    private float lastPunchTime = float.NegativeInfinity;
 
     private void Awake()
     {
@@ -36,6 +61,7 @@ public class EnemyHealthBar : MonoBehaviour
         // 보장되지 않아서(같은 오브젝트 내 컴포넌트 간 Awake 순서는 정해져 있지 않음), 여기서 다시
         // 채워준다 - 모든 오브젝트의 Awake()가 끝난 뒤에만 실행되는 Start()는 항상 안전하다.
         UpdateFill();
+        SetWhiteTrailWidth(fillRenderer.transform.localScale.x);
     }
 
     private void OnEnable()
@@ -63,6 +89,7 @@ public class EnemyHealthBar : MonoBehaviour
         barRoot = rootGO.transform;
         barRoot.SetParent(transform, false);
         barRoot.localScale = new Vector3(invX, invY, 1f);
+        barRestScale = barRoot.localScale;
 
         var spriteRenderer = GetComponent<SpriteRenderer>();
         float spriteTopWorldY = spriteRenderer != null ? spriteRenderer.bounds.extents.y : 0f;
@@ -81,17 +108,100 @@ public class EnemyHealthBar : MonoBehaviour
         fillAnchor.SetParent(barRoot, false);
         fillAnchor.localPosition = new Vector3(-barWidth / 2f, 0f, 0f);
 
+        // 기능 2: Fill보다 먼저(아래) 그려지는 흰색 잔여 체력(트레일) 바. Fill과 같은 앵커/좌표계를
+        // 공유해서 폭 계산 방식이 완전히 동일하다 - Fill이 그 위를 덮어서, 트레일 폭이 Fill 폭보다
+        // 큰 구간(=최근에 잃은 체력)만 흰색으로 보인다.
+        var whiteTrailGO = new GameObject("WhiteTrail");
+        whiteTrailGO.transform.SetParent(fillAnchor, false);
+        whiteTrailRenderer = whiteTrailGO.AddComponent<SpriteRenderer>();
+        whiteTrailRenderer.sprite = barSprite;
+        whiteTrailRenderer.color = Color.white;
+        whiteTrailRenderer.sortingOrder = 21;
+
         var fillGO = new GameObject("Fill");
         fillGO.transform.SetParent(fillAnchor, false);
         fillRenderer = fillGO.AddComponent<SpriteRenderer>();
         fillRenderer.sprite = barSprite;
         fillRenderer.color = fillColor;
-        fillRenderer.sortingOrder = 21;
+        fillRenderer.sortingOrder = 22;
     }
 
     private void HandleDamaged(int amount)
     {
+        float oldFillWidth = fillRenderer.transform.localScale.x;
+
+        // 초록 게이지는 항상 즉시(지연 없이) 실제 체력을 반영한다.
         UpdateFill();
+
+        // 기능 1: 펀치 스케일 - 쿨다운 안에 또 맞으면 재발동하지 않고 넘어간다(연속 히트 시 계속
+        // 들썩여서 시선을 뺏는 것 방지).
+        if (enablePunchScale && Time.time - lastPunchTime >= punchCooldown)
+        {
+            lastPunchTime = Time.time;
+            if (punchScaleRoutine != null)
+                StopCoroutine(punchScaleRoutine);
+            punchScaleRoutine = StartCoroutine(PunchScaleEffect());
+        }
+
+        // 기능 2: 흰색 잔여 체력 트레일 - 방금 잃은 만큼(oldFillWidth까지)은 흰색으로 남겨둔다.
+        // 이미 그보다 더 넓게 남아있으면(연속 히트 도중이라 아직 못 줄어든 경우) 그대로 유지한다.
+        if (enableWhiteTrail)
+        {
+            float currentWhiteWidth = whiteTrailRenderer.transform.localScale.x;
+            SetWhiteTrailWidth(Mathf.Max(currentWhiteWidth, oldFillWidth));
+
+            if (whiteTrailRoutine != null)
+                StopCoroutine(whiteTrailRoutine);
+            whiteTrailRoutine = StartCoroutine(WhiteTrailDrainEffect());
+        }
+    }
+
+    // 기능 1: 펀치 스케일 - barRoot를 punchScaleMultiplier배로 순간 키웠다가 punchScaleDuration에
+    // 걸쳐 원래 크기(barRestScale)로 되돌린다.
+    private IEnumerator PunchScaleEffect()
+    {
+        Vector3 punchedScale = barRestScale * punchScaleMultiplier;
+        float elapsed = 0f;
+
+        while (elapsed < punchScaleDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / punchScaleDuration);
+            barRoot.localScale = Vector3.Lerp(punchedScale, barRestScale, t);
+            yield return null;
+        }
+
+        barRoot.localScale = barRestScale;
+        punchScaleRoutine = null;
+    }
+
+    // 기능 2: whiteTrailHoldDelay만큼 대기한 뒤(그 사이 새 히트가 오면 HandleDamaged가 이 코루틴을
+    // 멈추고 새로 시작시키므로 자연히 대기가 연장된다), 흰색 잔여 체력을 그 시점의 실제 체력(Fill) 폭까지
+    // whiteTrailDrainDuration에 걸쳐 서서히 줄인다.
+    private IEnumerator WhiteTrailDrainEffect()
+    {
+        yield return new WaitForSeconds(whiteTrailHoldDelay);
+
+        float startWidth = whiteTrailRenderer.transform.localScale.x;
+        float targetWidth = fillRenderer.transform.localScale.x;
+        float elapsed = 0f;
+
+        while (elapsed < whiteTrailDrainDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / whiteTrailDrainDuration);
+            SetWhiteTrailWidth(Mathf.Lerp(startWidth, targetWidth, t));
+            yield return null;
+        }
+
+        SetWhiteTrailWidth(targetWidth);
+        whiteTrailRoutine = null;
+    }
+
+    private void SetWhiteTrailWidth(float width)
+    {
+        whiteTrailRenderer.transform.localScale = new Vector3(width, barHeight * 0.7f, 1f);
+        whiteTrailRenderer.transform.localPosition = new Vector3(width / 2f, 0f, 0f);
     }
 
     private void HandleDeath()

@@ -171,6 +171,18 @@ namespace PixelBattleText
 			{
 				var text = animatedTexts[i];
 
+				// A mid-Play script recompile triggers a domain reload, and Unity's serializer does not
+				// support jagged arrays (TMP_Text[][]) - so an in-flight entry's `letters` can come back
+				// null after reload, crashing this loop every frame forever after. Drop it directly
+				// (skip RemoveText's pool-return, since its letter arrays aren't in a valid state either).
+				if (text.letters == null || text.letterTransforms == null)
+				{
+					animatedTexts.RemoveAt(i);
+					i--;
+
+					continue;
+				}
+
 				if (text.animationFinished)
 				{
 					RemoveText(i);

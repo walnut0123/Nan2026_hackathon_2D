@@ -51,6 +51,14 @@ public class EnemyAttacker : MonoBehaviour
 
     private void Start()
     {
+        var priorityTarget = FindObjectOfType<PriorityTarget>();
+        if (priorityTarget != null)
+        {
+            playerTransform = priorityTarget.transform;
+            playerHealth = priorityTarget.GetComponent<Health>();
+            return;
+        }
+
         var playerInventory = FindObjectOfType<PlayerInventory>();
         if (playerInventory != null)
         {
@@ -114,5 +122,14 @@ public class EnemyAttacker : MonoBehaviour
 
         if (animator != null)
             animator.SetTrigger("Attack");
+    }
+
+    // EnemyChaser의 chaseRange(마젠타 원)와 같은 방식 - attackRange 값을 Inspector에서 바꿀 때마다
+    // Scene 뷰의 원이 즉시 갱신된다. Play 모드가 아닐 때는 chaser가 아직 null이라 EffectiveAttackRange가
+    // 그냥 attackRange와 같으므로, 여기서는 attackRange를 그대로 그려서 항상 편집 중인 값을 보여준다.
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, attackRange);
     }
 }
