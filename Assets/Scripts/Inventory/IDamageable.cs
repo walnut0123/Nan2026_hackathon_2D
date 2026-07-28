@@ -3,5 +3,5 @@ using System;
 public interface IDamageable
 {
     event Action OnDeath;
-    void TakeDamage(int amount);
+    void TakeDamage(float amount);
 }

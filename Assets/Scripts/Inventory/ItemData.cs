@@ -10,6 +10,15 @@ public enum ItemType
     Card
 }
 
+// Cards only: used by CardDamageSystem's poker-hand detection (Flush/Straight Flush).
+public enum CardSuit
+{
+    Hearts,
+    Spades,
+    Diamonds,
+    Clubs
+}
+
 [CreateAssetMenu(fileName = "NewItemData", menuName = "Inventory/Item Data")]
 public class ItemData : ScriptableObject
 {
@@ -23,6 +32,9 @@ public class ItemData : ScriptableObject
     public GameObject worldPrefab;
     public bool isCombinable;
 
-    // Cards only: rank value used by CardProjectile's damage formula (A=1 ... K=13).
+    // Cards only: rank value used in CardDamageSystem's damage formula (A=1 ... K=13).
     public int cardValue;
+
+    // Cards only: suit used by CardDamageSystem's poker-hand detection (Flush/Straight Flush).
+    public CardSuit suit;
 }

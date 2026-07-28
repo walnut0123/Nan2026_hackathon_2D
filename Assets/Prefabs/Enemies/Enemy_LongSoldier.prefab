@@ -149,6 +149,7 @@ GameObject:
   - component: {fileID: 8434723777153970832}
   - component: {fileID: 254351698536030166}
   - component: {fileID: 2227437771746566291}
+  - component: {fileID: 3054847427318827672}
   m_Layer: 0
   m_Name: Enemy_LongSoldier
   m_TagString: Enemy
@@ -319,7 +320,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bb1a53298443c5b42b78180c614e2945, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 30
+  maxHealth: 9.6
   deathDestroyDelay: 1
   isInvincible: 0
 --- !u!114 &3447472142078160549
@@ -393,3 +394,20 @@ MonoBehaviour:
   attackCooldown: 2
   muzzle: {fileID: 3943351917773600002}
   projectilePrefab: {fileID: 5707946990816367464, guid: cf3d0ff0d642a9e489e3699f57f629d3, type: 3}
+--- !u!114 &3054847427318827672
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8898017916503419874}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5af7f5fdcd3b6f349adb33adac7beec8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lootTable: {fileID: 11400000, guid: a63a26e14bee4bc4dbb701efe4ea1060, type: 2}
+  scatterRadius: 0.5
+  popForce: 2
+  dropOffset: {x: -2.5, y: 2}
+  testSpawnDropsKey: 107

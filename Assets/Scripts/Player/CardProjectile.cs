@@ -13,17 +13,20 @@ public class CardProjectile : MonoBehaviour
     // 90도 어긋난다. 이 오프셋으로 보정해서 카드가 옆면이 아닌 진행 방향을 향하도록 한다.
     [SerializeField] private float rotationOffsetDegrees = -90f;
 
-    // 데미지 = 기본 데미지 + 현재 보유 중인 카드 5칸의 합(CardInventory.TotalCardValue).
-    [SerializeField] private int baseDamage = 1;
+    // 데미지 계산(카드 액면가 × 족보 배율 × 스테이지 계수)은 전부 CardDamageSystem이 담당한다.
+    // 이 카드 자체가 어떤 카드인지(thrownCard)를 알아야 그 계산을 할 수 있어서 Initialize로 받는다.
+    private ItemData thrownCard;
+    private float stageCoefficient = 1f;
 
     private Transform targetTransform;
     private Vector3 targetPosition;
     private bool isInitialized = false;
 
     /// <summary>
-    /// 카드 발사 초기화 함수
+    /// 카드 발사 초기화 함수. card는 이번에 던지는 카드 자체(CardDamageSystem.CalculateShotDamage의
+    /// 기준이 되는 액면가), stageCoefficient는 스테이지별 난이도 미세조정 계수.
     /// </summary>
-    public void Initialize(Transform target)
+    public void Initialize(Transform target, ItemData card, float stageCoefficient = 1f)
     {
         if (target == null)
         {
@@ -32,6 +35,8 @@ public class CardProjectile : MonoBehaviour
         }
 
         targetTransform = target;
+        thrownCard = card;
+        this.stageCoefficient = stageCoefficient;
         UpdateTargetPosition();
 
         // 초기 생성 시 회전 설정
@@ -122,11 +127,11 @@ public class CardProjectile : MonoBehaviour
             var damageable = targetTransform.GetComponent<IDamageable>();
             if (damageable != null)
             {
-                int cardValue = CardInventory.Instance != null ? CardInventory.Instance.TotalCardValue : 0;
-                int damage = baseDamage + cardValue;
+                var heldCards = CardInventory.Instance != null ? CardInventory.Instance.Slots : System.Array.Empty<ItemData>();
+                float damage = CardDamageSystem.CalculateShotDamage(thrownCard, heldCards, out var hand, stageCoefficient);
 
                 damageable.TakeDamage(damage);
-                Debug.Log($"[CardProjectile] {targetTransform.name}에게 {damage} 데미지 (기본 {baseDamage} + 카드 합 {cardValue})");
+                Debug.Log($"[CardProjectile] {targetTransform.name}에게 {damage:F1} 데미지 (던진 카드 {thrownCard?.itemName}, 족보 {hand})");
                 DamageTextDisplay.ShowDamage(damage, targetTransform);
             }
         }

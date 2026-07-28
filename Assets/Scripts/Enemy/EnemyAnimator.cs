@@ -61,7 +61,7 @@ public class EnemyAnimator : MonoBehaviour
         lastPosition = currentPosition;
     }
 
-    private void HandleDamaged(int amount)
+    private void HandleDamaged(float amount)
     {
         animator.SetTrigger("Hit");
     }

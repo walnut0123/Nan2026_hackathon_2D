@@ -20,4 +20,5 @@ MonoBehaviour:
   maxStackCount: 1
   worldPrefab: {fileID: 4624209476108722039, guid: b39ad797c4a1a5a4a97da28ff0410fe5, type: 3}
   isCombinable: 0
-  cardValue: 1
+  cardValue: 14
+  suit: 2

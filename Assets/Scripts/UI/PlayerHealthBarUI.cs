@@ -59,7 +59,7 @@ public class PlayerHealthBarUI : MonoBehaviour
         }
     }
 
-    private void HandleDamaged(int amount)
+    private void HandleDamaged(float amount)
     {
         float oldFillAmount = barImage.fillAmount;
 

@@ -40,7 +40,7 @@ public class PlayerHitFlash : MonoBehaviour
             health.OnDamaged -= HandleDamaged;
     }
 
-    private void HandleDamaged(int amount)
+    private void HandleDamaged(float amount)
     {
         if (targetRenderer == null)
             return;

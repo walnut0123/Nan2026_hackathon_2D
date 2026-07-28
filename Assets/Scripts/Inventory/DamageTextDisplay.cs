@@ -54,7 +54,7 @@ public class DamageTextDisplay : MonoBehaviour
     }
 
     ///<summary>Shows a damage number above the target's head immediately, offset by a small random jitter so overlapping hits don't stack exactly on top of each other.</summary>
-    public static void ShowDamage(int amount, Transform target)
+    public static void ShowDamage(float amount, Transform target)
     {
         if (Instance == null || Instance.damageAnimation == null || target == null)
             return;
@@ -62,7 +62,7 @@ public class DamageTextDisplay : MonoBehaviour
         Instance.DisplayImmediate(amount, target);
     }
 
-    private void DisplayImmediate(int amount, Transform target)
+    private void DisplayImmediate(float amount, Transform target)
     {
         var cam = Camera.main;
         if (cam == null)
@@ -70,7 +70,9 @@ public class DamageTextDisplay : MonoBehaviour
 
         Vector3 worldPosition = target.position + GetHeadOffset(target) + GetJitter();
         Vector3 viewportPos = cam.WorldToViewportPoint(worldPosition);
-        PixelBattleTextController.DisplayText(amount.ToString(), damageAnimation, viewportPos);
+        // 소수점 한 자리까지 표기 (예: 2 -> "2.0") - CardDamageSystem이 BASE_SCALE 없이 그대로
+        // 소수 데미지를 계산하므로, 반올림해서 정수로 보여주면 그 정밀도가 화면에서 사라진다.
+        PixelBattleTextController.DisplayText(amount.ToString("F1"), damageAnimation, viewportPos);
     }
 
     // Option 3's accumulate/flush methods (kept for later, see field comments above):

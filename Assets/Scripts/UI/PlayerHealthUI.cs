@@ -41,7 +41,7 @@ public class PlayerHealthUI : MonoBehaviour
         }
     }
 
-    private void HandleDamaged(int amount) => UpdateText();
+    private void HandleDamaged(float amount) => UpdateText();
     private void HandleDeath() => UpdateText();
 
     private void UpdateText()
@@ -49,6 +49,7 @@ public class PlayerHealthUI : MonoBehaviour
         if (playerHealth == null || healthText == null)
             return;
 
-        healthText.text = $"{Mathf.Max(playerHealth.CurrentHealth, 0)}/{playerHealth.MaxHealth}";
+        // 체력 텍스트 자체는 정수로 표기 유지 (소수점은 데미지 텍스트에서만 보여준다).
+        healthText.text = $"{Mathf.CeilToInt(Mathf.Max(playerHealth.CurrentHealth, 0f))}/{Mathf.CeilToInt(playerHealth.MaxHealth)}";
     }
 }

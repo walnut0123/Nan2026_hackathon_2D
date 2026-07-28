@@ -21,3 +21,4 @@ MonoBehaviour:
   worldPrefab: {fileID: 7728330848366552443, guid: 73f0d994da32f814192b1895929db1c1, type: 3}
   isCombinable: 0
   cardValue: 8
+  suit: 1

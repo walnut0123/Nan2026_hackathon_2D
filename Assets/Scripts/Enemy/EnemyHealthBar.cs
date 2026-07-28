@@ -132,7 +132,7 @@ public class EnemyHealthBar : MonoBehaviour
         fillRenderer.sortingOrder = 22;
     }
 
-    private void HandleDamaged(int amount)
+    private void HandleDamaged(float amount)
     {
         float oldFillWidth = fillRenderer.transform.localScale.x;
 

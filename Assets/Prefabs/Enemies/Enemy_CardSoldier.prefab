@@ -18,6 +18,7 @@ GameObject:
   - component: {fileID: 8814933983242903123}
   - component: {fileID: 5770594935817173621}
   - component: {fileID: 8298189258307816593}
+  - component: {fileID: 6649251230824990322}
   m_Layer: 0
   m_Name: Enemy_CardSoldier
   m_TagString: Enemy
@@ -188,7 +189,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bb1a53298443c5b42b78180c614e2945, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 30
+  maxHealth: 9.6
   deathDestroyDelay: 1
   isInvincible: 0
 --- !u!114 &3557429327083655346
@@ -262,6 +263,23 @@ MonoBehaviour:
   whiteTrailHoldDelay: 0.4
   whiteTrailDrainDuration: 0.25
   whiteTrailMaxHoldWindow: 1.5
+--- !u!114 &6649251230824990322
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7935729095085954532}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5af7f5fdcd3b6f349adb33adac7beec8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lootTable: {fileID: 11400000, guid: a63a26e14bee4bc4dbb701efe4ea1060, type: 2}
+  scatterRadius: 0.5
+  popForce: 2
+  dropOffset: {x: -2.5, y: 2}
+  testSpawnDropsKey: 107
 --- !u!1 &8213214224409210488
 GameObject:
   m_ObjectHideFlags: 0

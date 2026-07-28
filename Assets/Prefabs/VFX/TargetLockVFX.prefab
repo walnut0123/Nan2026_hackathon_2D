@@ -97,6 +97,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83a3bfeec728c3546a701800f287e3b3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  startScaleMultiplier: 1.4
+  startScaleMultiplier: 1.6
   shrinkDuration: 0.2
   holdAfterShrink: 1

@@ -119,6 +119,7 @@ GameObject:
   - component: {fileID: 5846271512784240709}
   - component: {fileID: 1556493376863356613}
   - component: {fileID: 528578447380685899}
+  - component: {fileID: 3290443366856150698}
   m_Layer: 0
   m_Name: Enemy_Jack
   m_TagString: Enemy
@@ -289,7 +290,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bb1a53298443c5b42b78180c614e2945, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 30
+  maxHealth: 24
   deathDestroyDelay: 1
   isInvincible: 0
 --- !u!114 &4671320460111401461
@@ -363,3 +364,20 @@ MonoBehaviour:
   whiteTrailHoldDelay: 0.4
   whiteTrailDrainDuration: 0.25
   whiteTrailMaxHoldWindow: 1.5
+--- !u!114 &3290443366856150698
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8531640436260252049}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5af7f5fdcd3b6f349adb33adac7beec8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lootTable: {fileID: 11400000, guid: a63a26e14bee4bc4dbb701efe4ea1060, type: 2}
+  scatterRadius: 0.5
+  popForce: 2
+  dropOffset: {x: -2.5, y: 2}
+  testSpawnDropsKey: 107
