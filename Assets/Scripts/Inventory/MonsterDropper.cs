@@ -3,12 +3,7 @@ using UnityEngine;
 public class MonsterDropper : MonoBehaviour
 {
     [SerializeField] private LootTable lootTable;
-    [SerializeField] private float scatterRadius = 0.5f;
     [SerializeField] private float popForce = 2f;
-
-    // Pushes drops away from the monster's own spawn point so a respawning monster doesn't
-    // land on top of (and block picking up) items it just dropped.
-    [SerializeField] private Vector2 dropOffset = new Vector2(-2.5f, 2f);
 
     [Header("TEMP - Step 5 manual verification only (remove once real combat/Health exists)")]
     [SerializeField] private KeyCode testSpawnDropsKey = KeyCode.K;
@@ -29,6 +24,9 @@ public class MonsterDropper : MonoBehaviour
             SpawnDrops();
     }
 
+    /// <summary>몬스터 1마리당 아이템 1개만 드랍한다(LootTable.GetSingleDrop). 오프셋/스캐터 없이
+    /// 죽은 자리(transform.position)에 정확히 생성한다 - popForce는 위치 변경이 아니라 스폰 직후
+    /// 순수 물리 임펄스라 살짝 튀어오르는 연출만 남는다.</summary>
     public void SpawnDrops()
     {
         if (lootTable == null)
@@ -37,33 +35,37 @@ public class MonsterDropper : MonoBehaviour
             return;
         }
 
-        foreach (var (item, count) in lootTable.GetDrops())
+        var drop = lootTable.GetSingleDrop();
+        if (drop == null)
         {
-            if (item.worldPrefab == null)
-            {
-                Debug.LogWarning($"[MonsterDropper] {item.itemName} has no worldPrefab; skipping drop.");
-                continue;
-            }
-
-            Vector2 scatter = Random.insideUnitCircle * scatterRadius;
-            Vector3 spawnPos = transform.position + new Vector3(dropOffset.x + scatter.x, dropOffset.y + scatter.y, 0f);
-
-            var dropped = Instantiate(item.worldPrefab, spawnPos, Quaternion.identity);
-            dropped.AddComponent<DroppedItemMarker>();
-
-            var pickup = dropped.GetComponent<ItemPickup>();
-            if (pickup != null)
-            {
-                pickup.itemData = item;
-                pickup.count = count;
-                pickup.MarkAsFieldDrop();
-            }
-
-            var rb = dropped.GetComponent<Rigidbody2D>();
-            if (rb != null)
-                rb.AddForce(Vector2.up * popForce, ForceMode2D.Impulse);
-
-            Debug.Log($"[MonsterDropper] Dropped {item.itemName} x{count} at {spawnPos}");
+            Debug.Log("[MonsterDropper] No drop this time.");
+            return;
         }
+
+        var (item, count) = drop.Value;
+        if (item.worldPrefab == null)
+        {
+            Debug.LogWarning($"[MonsterDropper] {item.itemName} has no worldPrefab; skipping drop.");
+            return;
+        }
+
+        Vector3 spawnPos = transform.position;
+
+        var dropped = Instantiate(item.worldPrefab, spawnPos, Quaternion.identity);
+        dropped.AddComponent<DroppedItemMarker>();
+
+        var pickup = dropped.GetComponent<ItemPickup>();
+        if (pickup != null)
+        {
+            pickup.itemData = item;
+            pickup.count = count;
+            pickup.MarkAsFieldDrop();
+        }
+
+        var rb = dropped.GetComponent<Rigidbody2D>();
+        if (rb != null)
+            rb.AddForce(Vector2.up * popForce, ForceMode2D.Impulse);
+
+        Debug.Log($"[MonsterDropper] Dropped {item.itemName} x{count} at {spawnPos}");
     }
 }

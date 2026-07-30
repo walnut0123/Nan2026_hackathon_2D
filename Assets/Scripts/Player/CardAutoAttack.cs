@@ -27,11 +27,6 @@ public class CardAutoAttack : MonoBehaviour
     [Tooltip("CardDamageSystem 데미지 공식에 곱해지는 스테이지 난이도 계수. 기본 1.0")]
     public float stageCoefficient = 1f;
 
-    // CardInventory의 5칸을 슬롯 순서대로(라운드로빈) 순환 발사하기 위한 인덱스.
-    // 어떤 카드를 던지느냐가 곧 그 발의 데미지(CardDamageSystem.CalculateShotDamage)를 정하므로
-    // 무작위가 아니라 항상 정해진 순서로 순환한다(CardDamageSystem.cs 3번 항목 설계 참고).
-    private int fireIndex = 0;
-
     // ShootSingleCard의 "던질 카드 없음" 경고 로그 스팸 방지용.
     private float lastNoCardWarningTime = -999f;
 
@@ -184,7 +179,8 @@ public class CardAutoAttack : MonoBehaviour
     }
 
     /// <summary>
-    /// CardInventory의 보유 카드를 슬롯 순서대로(라운드로빈) 하나 던집니다.
+    /// CardInventory.DrawCard로 카드 한 장을 뽑아 던집니다 (기본은 랜덤 투척, CardInventory의
+    /// useSequentialFire를 켜면 순차 발사로 전환 - CardDamageSystem.cs 5번 항목 참고).
     /// 보유 카드가 하나도 없으면(수집 전 초반 상태 포함) 이번 발사는 아무 일도 하지 않습니다 -
     /// "카드를 모아야 싸울 수 있다"는 설계 의도이므로 임의의 기본 무기로 대체하지 않습니다.
     /// </summary>
@@ -193,11 +189,11 @@ public class CardAutoAttack : MonoBehaviour
         if (currentTarget == null)
             return;
 
-        var slots = CardInventory.Instance != null ? CardInventory.Instance.Slots : null;
-        if (slots == null || slots.Count == 0)
+        var inventory = CardInventory.Instance;
+        if (inventory == null)
             return;
 
-        ItemData card = GetNextHeldCard(slots);
+        ItemData card = inventory.DrawCard(out int slotIndex);
         if (card == null || card.worldPrefab == null)
         {
             // 던질 카드가 없어서 공격이 조용히 아무것도 안 하는 상태 - 예전엔 로그가 전혀 안 남아서
@@ -210,6 +206,9 @@ public class CardAutoAttack : MonoBehaviour
             return;
         }
 
+        int upgradeLevel = inventory.UpgradeLevels[slotIndex];
+        int playerLevel = inventory.PlayerLevel;
+
         Vector3 spawnPosition = (firePoint != null) ? firePoint.position : transform.position;
 
         GameObject cardInstance = Instantiate(card.worldPrefab, spawnPosition, Quaternion.identity);
@@ -217,24 +216,8 @@ public class CardAutoAttack : MonoBehaviour
         CardProjectile projectile = cardInstance.GetComponent<CardProjectile>();
         if (projectile != null)
         {
-            projectile.Initialize(currentTarget, card, stageCoefficient);
+            projectile.Initialize(currentTarget, card, upgradeLevel, playerLevel, stageCoefficient);
         }
-    }
-
-    /// <summary>fireIndex부터 슬롯을 한 바퀴 돌며 비어있지 않은 다음 카드를 찾는다(빈 슬롯은 건너뜀).
-    /// 5칸이 전부 비어있으면 null을 반환한다.</summary>
-    private ItemData GetNextHeldCard(IReadOnlyList<ItemData> slots)
-    {
-        for (int i = 0; i < slots.Count; i++)
-        {
-            ItemData card = slots[fireIndex];
-            fireIndex = CardDamageSystem.GetNextFireIndex(fireIndex, slots.Count);
-
-            if (card != null)
-                return card;
-        }
-
-        return null;
     }
 
     private void OnDrawGizmosSelected()

@@ -12,6 +12,10 @@ public class InteractionDetector : MonoBehaviour
     /// <summary>Fired when the nearest interactable changes. Null label = hide prompt.</summary>
     public event Action<string> OnPromptChanged;
 
+    /// <summary>지금 프롬프트가 떠 있는 대상(없으면 null). 카드는 즉시 자동 획득되어 프롬프트를
+    /// 거치지 않으므로 여기 잡히지 않는다 - 무기 등 버튼으로 줍는 일반 아이템에만 해당.</summary>
+    public IInteractable CurrentTarget => currentPromptTarget;
+
     private void Awake()
     {
         if (playerInventory == null)
@@ -23,6 +27,22 @@ public class InteractionDetector : MonoBehaviour
         var interactable = other.GetComponent<IInteractable>();
         if (interactable == null || interactablesInRange.Contains(interactable))
             return;
+
+        if (interactable is ItemPickup pickup && pickup.itemData != null && pickup.itemData.itemType == ItemType.Card)
+        {
+            // 카드 투사체(CardAutoAttack.ShootSingleCard)는 필드/몬스터 드랍과 같은 프리팹을
+            // 재사용하기 때문에 IInteractable 자체는 항상 붙어 있다 - 실제로 주울 수 있는
+            // 상태인지는 ItemPickup.IsFieldDrop으로만 구분된다. 이 체크가 없으면 날아가는
+            // 카드가 플레이어 트리거 범위를 스칠 때마다 잘못 반응한다.
+            if (!pickup.IsFieldDrop)
+                return;
+
+            // 카드는 "줍기" 버튼을 기다리지 않고 범위에 들어오는 즉시 자동으로 줍는다
+            // (ItemPickup.InteractAsCard가 CardAcquiredPopup을 알아서 띄운다). 다른 종류의
+            // 아이템(무기 등)은 기존처럼 프롬프트+버튼 흐름을 그대로 쓴다.
+            interactable.Interact(playerInventory);
+            return;
+        }
 
         interactablesInRange.Add(interactable);
         Debug.Log($"[InteractionDetector] In range: {other.name}");

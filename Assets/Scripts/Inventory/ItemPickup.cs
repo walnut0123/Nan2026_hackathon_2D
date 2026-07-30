@@ -23,6 +23,10 @@ public class ItemPickup : MonoBehaviour, IInteractable
         isFieldDrop = true;
     }
 
+    /// <summary>InteractionDetector에서 "지금 실제로 주울 수 있는 상태인가"를 판단하는 데 쓴다
+    /// (날아가는 카드 투사체는 이 값이 false).</summary>
+    public bool IsFieldDrop => isFieldDrop;
+
     public void Interact(PlayerInventory inventory)
     {
         if (itemData == null)
@@ -69,13 +73,28 @@ public class ItemPickup : MonoBehaviour, IInteractable
         if (!isFieldDrop)
             return;
 
-        if (CardInventory.Instance == null || !CardInventory.Instance.TryAddCard(itemData))
-        {
-            Debug.Log($"[ItemPickup] Card inventory full, could not pick up {itemData.itemName}");
+        var cardInventory = CardInventory.Instance;
+        if (cardInventory == null)
             return;
-        }
+
+        int playerLevel = cardInventory.PlayerLevel;
+
+        // Acquire() 전 스냅샷 - 자동교체(Replaced)일 때 "무엇이 밀려났는지"와, 획득 전/후
+        // 데미지 비교 패널(CardDamagePreviewDebugUI) 양쪽 다 이 시점 상태가 필요하다.
+        var beforeCards = ToArray(cardInventory.Slots);
+        var beforeDamages = CardDamageSystem.GetSlotDamages(cardInventory.Slots, cardInventory.UpgradeLevels, playerLevel);
+        var compositionBefore = CardDamageSystem.EvaluateComposition(cardInventory.Slots);
+
+        var action = cardInventory.Acquire(itemData, out int targetSlot);
+        ItemData replacedCard = action == CardAcquireAction.Replaced ? beforeCards[targetSlot] : null;
+
+        var afterCards = ToArray(cardInventory.Slots);
+        var afterDamages = CardDamageSystem.GetSlotDamages(cardInventory.Slots, cardInventory.UpgradeLevels, playerLevel);
+        var compositionAfter = CardDamageSystem.EvaluateComposition(cardInventory.Slots);
 
         Debug.Log($"[ItemPickup] Picked up card {itemData.itemName}");
+        CardAcquiredPopup.Show(itemData, action, compositionBefore, compositionAfter, replacedCard);
+        CardDamagePreviewDebugUI.ShowSnapshot(itemData, beforeCards, beforeDamages, afterCards, afterDamages);
 
         if (destroyOnFullPickup)
         {
@@ -85,5 +104,13 @@ public class ItemPickup : MonoBehaviour, IInteractable
 
             Destroy(gameObject);
         }
+    }
+
+    private static ItemData[] ToArray(System.Collections.Generic.IReadOnlyList<ItemData> cards)
+    {
+        var result = new ItemData[cards.Count];
+        for (int i = 0; i < cards.Count; i++)
+            result[i] = cards[i];
+        return result;
     }
 }

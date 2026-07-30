@@ -13,9 +13,12 @@ public class CardProjectile : MonoBehaviour
     // 90도 어긋난다. 이 오프셋으로 보정해서 카드가 옆면이 아닌 진행 방향을 향하도록 한다.
     [SerializeField] private float rotationOffsetDegrees = -90f;
 
-    // 데미지 계산(카드 액면가 × 족보 배율 × 스테이지 계수)은 전부 CardDamageSystem이 담당한다.
-    // 이 카드 자체가 어떤 카드인지(thrownCard)를 알아야 그 계산을 할 수 있어서 Initialize로 받는다.
+    // 데미지 계산((레벨데미지+액면가보너스+강화) × 족보 배율 × 스테이지 계수)은 전부
+    // CardDamageSystem이 담당한다. 이 카드 자체가 어떤 카드인지(thrownCard), 그 슬롯의 강화
+    // 수치, 던진 시점의 플레이어 레벨을 알아야 그 계산을 할 수 있어서 Initialize로 받는다.
     private ItemData thrownCard;
+    private int thrownCardUpgradeLevel;
+    private int playerLevel;
     private float stageCoefficient = 1f;
 
     private Transform targetTransform;
@@ -24,9 +27,10 @@ public class CardProjectile : MonoBehaviour
 
     /// <summary>
     /// 카드 발사 초기화 함수. card는 이번에 던지는 카드 자체(CardDamageSystem.CalculateShotDamage의
-    /// 기준이 되는 액면가), stageCoefficient는 스테이지별 난이도 미세조정 계수.
+    /// 기준이 되는 액면가), upgradeLevel은 그 카드가 놓였던 슬롯의 강화 수치, playerLevel은
+    /// 던진 시점의 플레이어 레벨, stageCoefficient는 스테이지별 난이도 미세조정 계수.
     /// </summary>
-    public void Initialize(Transform target, ItemData card, float stageCoefficient = 1f)
+    public void Initialize(Transform target, ItemData card, int upgradeLevel, int playerLevel, float stageCoefficient = 1f)
     {
         if (target == null)
         {
@@ -36,6 +40,8 @@ public class CardProjectile : MonoBehaviour
 
         targetTransform = target;
         thrownCard = card;
+        thrownCardUpgradeLevel = upgradeLevel;
+        this.playerLevel = playerLevel;
         this.stageCoefficient = stageCoefficient;
         UpdateTargetPosition();
 
@@ -128,10 +134,11 @@ public class CardProjectile : MonoBehaviour
             if (damageable != null)
             {
                 var heldCards = CardInventory.Instance != null ? CardInventory.Instance.Slots : System.Array.Empty<ItemData>();
-                float damage = CardDamageSystem.CalculateShotDamage(thrownCard, heldCards, out var hand, stageCoefficient);
+                float damage = CardDamageSystem.CalculateShotDamage(
+                    thrownCard, thrownCardUpgradeLevel, heldCards, playerLevel, out var composition, stageCoefficient);
 
                 damageable.TakeDamage(damage);
-                Debug.Log($"[CardProjectile] {targetTransform.name}에게 {damage:F1} 데미지 (던진 카드 {thrownCard?.itemName}, 족보 {hand})");
+                Debug.Log($"[CardProjectile] {targetTransform.name}에게 {damage:F1} 데미지 (던진 카드 {thrownCard?.itemName}, 구성 {CardDamageSystem.GetCompositionName(composition)})");
                 DamageTextDisplay.ShowDamage(damage, targetTransform);
             }
         }

@@ -108,8 +108,15 @@ public class GameManager : MonoBehaviour
 
         if (CardInventory.Instance != null)
         {
-            foreach (var card in CardInventory.Instance.Slots)
-                data.cardSlotItemIds.Add(card != null ? card.itemId : string.Empty);
+            var cardSlots = CardInventory.Instance.Slots;
+            var upgradeLevels = CardInventory.Instance.UpgradeLevels;
+            for (int i = 0; i < cardSlots.Count; i++)
+            {
+                data.cardSlotItemIds.Add(cardSlots[i] != null ? cardSlots[i].itemId : string.Empty);
+                data.cardSlotUpgradeLevels.Add(upgradeLevels[i]);
+            }
+
+            data.cardTotalAcquired = CardInventory.Instance.TotalAcquired;
         }
 
         data.removedWorldObjectIds.AddRange(removedWorldObjectIds);
@@ -214,10 +221,12 @@ public class GameManager : MonoBehaviour
                         continue;
                     }
 
-                    CardInventory.Instance.SetSlot(i, card);
+                    int upgradeLevel = i < data.cardSlotUpgradeLevels.Count ? data.cardSlotUpgradeLevels[i] : 0;
+                    CardInventory.Instance.SetSlot(i, card, upgradeLevel);
                 }
             }
 
+            CardInventory.Instance.SetTotalAcquired(data.cardTotalAcquired);
             CardInventory.Instance.NotifyChanged();
         }
 

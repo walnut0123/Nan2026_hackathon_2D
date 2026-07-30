@@ -7,6 +7,8 @@ public class CardSlotUI : MonoBehaviour
 
     public void SetCard(ItemData card)
     {
+        if (icon == null) return;
+
         icon.sprite = card != null ? card.icon : null;
         icon.enabled = card != null && card.icon != null;
     }

@@ -10,7 +10,7 @@ public class MonsterSpawnEntry
 {
     public GameObject enemyPrefab;
     public Transform spawnPoint;
-    public float respawnDelay = 3f;
+    public float respawnDelay = 7f;
 }
 
 public class MonsterSpawn : MonoBehaviour
