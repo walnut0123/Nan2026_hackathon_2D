@@ -5,6 +5,9 @@ public class MonsterDropper : MonoBehaviour
     [SerializeField] private LootTable lootTable;
     [SerializeField] private float popForce = 2f;
 
+    [Tooltip("true면 LootTable에서 카드 타입 아이템이 뽑혀도 드랍하지 않는다.")]
+    [SerializeField] private bool disableCardDrops = true;
+
     [Header("TEMP - Step 5 manual verification only (remove once real combat/Health exists)")]
     [SerializeField] private KeyCode testSpawnDropsKey = KeyCode.K;
 
@@ -43,6 +46,12 @@ public class MonsterDropper : MonoBehaviour
         }
 
         var (item, count) = drop.Value;
+        if (disableCardDrops && item.itemType == ItemType.Card)
+        {
+            Debug.Log($"[MonsterDropper] 카드 드랍 비활성화됨 - {item.itemName} 드랍 취소.");
+            return;
+        }
+
         if (item.worldPrefab == null)
         {
             Debug.LogWarning($"[MonsterDropper] {item.itemName} has no worldPrefab; skipping drop.");

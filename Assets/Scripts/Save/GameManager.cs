@@ -12,10 +12,6 @@ public class GameManager : MonoBehaviour
     public const string MainSceneName = "Main";
 
     [SerializeField] private ItemDatabase itemDatabase;
-
-    [Tooltip("Where the player spawns on a brand new game (no save data yet).")]
-    [SerializeField] private Vector3 newGameSpawnPosition = new Vector3(56f, 0f, 0f);
-
     private SaveData pendingLoadData;
 
     // IDs of pre-placed monsters/pickups killed or picked up this session, so a later
@@ -161,12 +157,6 @@ public class GameManager : MonoBehaviour
         {
             ApplyLoadedData(pendingLoadData);
             pendingLoadData = null;
-        }
-        else
-        {
-            var playerInventory = FindObjectOfType<PlayerInventory>();
-            if (playerInventory != null)
-                playerInventory.transform.position = newGameSpawnPosition;
         }
     }
 

@@ -305,7 +305,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 696f2e804c193d442bcf4cb2f5a4b4b2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 1.09375
+  moveSpeed: 0.5
   chaseRange: 6.25
   stopGap: 0.05
 --- !u!114 &5846271512784240709
@@ -377,7 +377,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lootTable: {fileID: 11400000, guid: a63a26e14bee4bc4dbb701efe4ea1060, type: 2}
-  scatterRadius: 0.5
   popForce: 2
-  dropOffset: {x: -2.5, y: 2}
+  disableCardDrops: 1
   testSpawnDropsKey: 107

@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 04c8fbbd18beb874f8bf78e11ab5a6c2
+guid: 32ba45a0fc759234ba5a8d49dea386d8
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -72,7 +72,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 0
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -123,129 +123,66 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Cardsoldier_walk_0
+      name: custom_BOSSHP_Bar_cover
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+        x: 5
+        y: 36
+        width: 129
+        height: 12
+      alignment: 4
+      pivot: {x: 0, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 36495024ed6e81d50800000000000000
-      internalID: -2880550506858176948
+      spriteID: df41e1134e4297a43ab479180c4ab37d
+      internalID: -556569934
       vertices: []
-      indices:
+      indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Cardsoldier_walk_1
+      name: custom_BOSSHP_Bar
       rect:
         serializedVersion: 2
-        x: 32
-        y: 0
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+        x: 12
+        y: 28
+        width: 119
+        height: 6
+      alignment: 4
+      pivot: {x: 0, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 2cd70daf34e189a30800000000000000
-      internalID: 3029622641361446732
+      spriteID: b24969bdfc4ddb546b35fcfbe045df02
+      internalID: 2014452304
       vertices: []
-      indices:
+      indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Cardsoldier_walk_2
+      name: custom_BOSSHP_bar_Frame
       rect:
         serializedVersion: 2
-        x: 64
-        y: 0
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+        x: 5
+        y: 11
+        width: 129
+        height: 12
+      alignment: 4
+      pivot: {x: 0, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: c25fa781f99d6a2d0800000000000000
-      internalID: 4097703692327645416
+      spriteID: 5316935f62eaba24899e90a8243a4438
+      internalID: 1085179733
       vertices: []
-      indices:
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Cardsoldier_walk_3
-      rect:
-        serializedVersion: 2
-        x: 96
-        y: 0
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: b03d6032ae251d860800000000000000
-      internalID: 7084139246100152418
-      vertices: []
-      indices:
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Cardsoldier_walk_4
-      rect:
-        serializedVersion: 2
-        x: 128
-        y: 0
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 5e950b5fd1736a730800000000000000
-      internalID: -82362594837371689
-      vertices: []
-      indices:
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Cardsoldier_walk_5
-      rect:
-        serializedVersion: 2
-        x: 160
-        y: 0
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 1e9ddca6b70d74bb0800000000000000
-      internalID: -4417297945296967982
-      vertices: []
-      indices:
+      indices: 
       edges: []
       weights: []
     outline: []
@@ -254,17 +191,14 @@ TextureImporter:
     spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
-    indices:
+    indices: 
     edges: []
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      Cardsoldier_walk_0: -2880550506858176948
-      Cardsoldier_walk_1: 3029622641361446732
-      Cardsoldier_walk_2: 4097703692327645416
-      Cardsoldier_walk_3: 7084139246100152418
-      Cardsoldier_walk_4: -82362594837371689
-      Cardsoldier_walk_5: -4417297945296967982
+      custom_BOSSHP_Bar: 2014452304
+      custom_BOSSHP_Bar_cover: -556569934
+      custom_BOSSHP_bar_Frame: 1085179733
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -2095,7 +2095,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   itemDatabase: {fileID: 11400000, guid: 72a1d3e9d216b7b47856b048ffc10057, type: 2}
-  newGameSpawnPosition: {x: 0, y: 0, z: 0}
+  newGameSpawnPosition: {x: -1.86, y: -6.79, z: 0}
 --- !u!4 &1239404527
 Transform:
   m_ObjectHideFlags: 0

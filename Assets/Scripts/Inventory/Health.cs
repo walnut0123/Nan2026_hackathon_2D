@@ -16,21 +16,39 @@ public class Health : MonoBehaviour, IDamageable
 
     private float currentHealth;
     private bool isDead;
+    private bool initialized;
 
     public event Action OnDeath;
     public event Action<float> OnDamaged;
 
-    // EnemyHealthBar 등 UI가 현재/최대 체력을 읽을 수 있도록 노출.
-    public float CurrentHealth => currentHealth;
+    // EnemyHealthBar 등 UI가 현재/최대 체력을 읽을 수 있도록 노출. CurrentHealth는 지연
+    // 초기화한다 - 비활성 상태로 배치해뒀다가 나중에 활성화되는 오브젝트(보스 등)는 Awake가
+    // 아직 안 돌았을 수 있는데, 그 사이 UI가 먼저 CurrentHealth를 읽으면 필드 기본값 0이
+    // 아니라 maxHealth를 봐야 하기 때문.
+    public float CurrentHealth
+    {
+        get { EnsureInitialized(); return currentHealth; }
+    }
     public float MaxHealth => maxHealth;
 
     private void Awake()
     {
+        EnsureInitialized();
+    }
+
+    private void EnsureInitialized()
+    {
+        if (initialized)
+            return;
+
         currentHealth = maxHealth;
+        initialized = true;
     }
 
     public void TakeDamage(float amount)
     {
+        EnsureInitialized();
+
         if (isDead || amount <= 0f)
             return;
 

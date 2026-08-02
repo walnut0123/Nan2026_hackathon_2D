@@ -42,7 +42,7 @@ public class RangedProjectile : MonoBehaviour
         if (other.CompareTag("Enemy"))
             return;
 
-        var health = other.GetComponent<Health>();
+        var health = DamageUtil.ResolveHealth(other);
         if (health != null)
         {
             health.TakeDamage(damage);
