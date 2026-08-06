@@ -48,6 +48,9 @@ public class InteractionPromptUI : MonoBehaviour
         }
 
         gameObject.SetActive(true);
-        promptText.text = $"{label} 줍기";
+
+        bool isCard = detector.CurrentTarget is ItemPickup pickup
+            && pickup.itemData != null && pickup.itemData.itemType == ItemType.Card;
+        promptText.text = isCard ? $"{label} 획득" : $"{label} 줍기";
     }
 }

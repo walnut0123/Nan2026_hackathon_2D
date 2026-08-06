@@ -7,9 +7,12 @@ using UnityEngine;
 /// CardDamageSystem.OfferPreview의 시뮬레이션 결과 태그로도 쓰인다.</summary>
 public enum CardAcquireAction
 {
-    Added,      // 빈 슬롯에 신규 추가
-    Upgraded,   // 이미 보유한 카드라 강화(+1)
-    Replaced    // 5칸이 다른 카드로 꽉 차 있어 가장 약한 슬롯을 자동 교체
+    Added,          // 빈 슬롯에 신규 추가
+    Upgraded,       // 이미 보유한 카드라 강화(+1)
+    Replaced,       // 플레이어가 직접 고른 슬롯을 교체(CardInventory.SwapSlot)
+    NeedsSwapChoice // 5칸이 다른 카드로 꽉 차 있어, 어느 슬롯을 교체할지 플레이어의 선택이 필요함.
+                     // 이 값이 반환되면 슬롯은 변경되지 않은 상태다 - 호출부가 UI로 선택을 받은 뒤
+                     // SwapSlot()을 직접 호출해야 한다.
 }
 
 /// <summary>
@@ -100,9 +103,10 @@ public class CardInventory : MonoBehaviour
     }
 
     /// <summary>
-    /// 카드 획득. 이미 보유한 카드(같은 itemId)면 그 슬롯을 강화(upgradeLevel+1)하고,
-    /// 빈 칸이 있으면 새로 추가하고, 다른 카드로 5칸이 이미 꽉 찬 상태면 가장 약한 슬롯
-    /// (FindWeakestSlot)을 자동으로 교체한다 - 항상 성공한다.
+    /// 카드 획득. 이미 보유한 카드(같은 itemId)면 그 슬롯을 강화(upgradeLevel+1)하고, 빈 칸이
+    /// 있으면 새로 추가한다. 다른 카드로 5칸이 이미 꽉 찬 상태(=새 카드인데 넣을 빈 칸이 없음)라면
+    /// 자동으로 아무 슬롯이나 교체하지 않고 NeedsSwapChoice를 반환한다 - 슬롯은 변경되지 않으며,
+    /// 어느 슬롯을 내보낼지는 플레이어가 UI(변경 버튼)로 직접 고른 뒤 SwapSlot()을 호출해야 한다.
     /// </summary>
     public CardAcquireAction Acquire(ItemData card, out int targetSlot)
     {
@@ -130,22 +134,42 @@ public class CardInventory : MonoBehaviour
             }
         }
 
-        int weakest = FindWeakestSlot();
-        Debug.Log($"[CardInventory] 인벤토리가 꽉 차 있어 가장 약한 슬롯 [{weakest}]({slots[weakest].card.itemName})를 {card.itemName}(으)로 교체합니다.");
-        slots[weakest] = new CardSlot { card = card, upgradeLevel = 0 };
-        TotalAcquired++;
-        targetSlot = weakest;
-        OnChanged?.Invoke();
-        return CardAcquireAction.Replaced;
+        targetSlot = -1;
+        return CardAcquireAction.NeedsSwapChoice;
     }
 
-    /// <summary>Acquire()의 bool 오버로드. 기존 호출부(ItemPickup 등) 호환용 - card가 null이 아닌 한
-    /// 항상 true를 반환한다(자동 교체로 실패 케이스가 없어졌다).</summary>
+    /// <summary>Acquire()의 bool 오버로드. 기존 호출부 호환용 - 인벤토리가 꽉 차 플레이어의 선택이
+    /// 필요한 경우(NeedsSwapChoice)에는 아무것도 넣지 못했으므로 false를 반환한다.</summary>
     public bool TryAddCard(ItemData card)
     {
         if (card == null) return false;
-        Acquire(card, out _);
-        return true;
+        return Acquire(card, out _) != CardAcquireAction.NeedsSwapChoice;
+    }
+
+    /// <summary>플레이어가 직접 고른 슬롯을 새 카드로 교체한다(Acquire()가 NeedsSwapChoice를
+    /// 반환했을 때 UI에서 슬롯을 선택한 뒤 호출). 교체되어 밀려난 카드를 반환한다.</summary>
+    public ItemData SwapSlot(int index, ItemData newCard)
+    {
+        if (index < 0 || index >= slots.Length || newCard == null)
+            return null;
+
+        ItemData replaced = slots[index].card;
+        slots[index] = new CardSlot { card = newCard, upgradeLevel = 0 };
+        TotalAcquired++;
+        OnChanged?.Invoke();
+        return replaced;
+    }
+
+    /// <summary>5칸이 전부 채워져 있는지. 새 카드를 주웠을 때 자동 추가가 가능한지(빈 칸 있음) vs
+    /// 플레이어가 교체할 슬롯을 직접 골라야 하는지 UI가 미리 판단하는 데 쓴다.</summary>
+    public bool IsFull
+    {
+        get
+        {
+            for (int i = 0; i < slots.Length; i++)
+                if (slots[i].card == null) return false;
+            return true;
+        }
     }
 
     /// <summary>

@@ -1,9 +1,10 @@
 using UnityEngine;
 
-/// <summary>Bridges movement/combat state into the Animator without touching EnemyChaser/Health
-/// directly. Speed is derived from frame-to-frame Rigidbody2D position delta (kinematic bodies
-/// don't auto-update .velocity when moved via MovePosition), and Hit/Die triggers come from
-/// Health's events.</summary>
+/// <summary>Bridges movement/combat state into the Animator without touching EnemyAIPathMover/Health
+/// directly. Speed is derived from frame-to-frame Transform position delta - reads transform.position
+/// directly rather than Rigidbody2D.position so it works regardless of what actually moves the enemy
+/// (AIPath writes transform.position directly, not through rigidbody velocity/MovePosition).
+/// Hit/Die triggers come from Health's events.</summary>
 [RequireComponent(typeof(Animator))]
 public class EnemyAnimator : MonoBehaviour
 {
@@ -12,7 +13,6 @@ public class EnemyAnimator : MonoBehaviour
 
     private Animator animator;
     private SpriteRenderer spriteRenderer;
-    private Rigidbody2D rb;
     private Health health;
 
     private Vector2 lastPosition;
@@ -22,13 +22,12 @@ public class EnemyAnimator : MonoBehaviour
     {
         animator = GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
-        rb = GetComponent<Rigidbody2D>();
         health = GetComponent<Health>();
     }
 
     private void OnEnable()
     {
-        lastPosition = rb != null ? rb.position : (Vector2)transform.position;
+        lastPosition = transform.position;
 
         if (health != null)
         {
@@ -48,7 +47,7 @@ public class EnemyAnimator : MonoBehaviour
 
     private void Update()
     {
-        Vector2 currentPosition = rb != null ? rb.position : (Vector2)transform.position;
+        Vector2 currentPosition = transform.position;
         Vector2 delta = currentPosition - lastPosition;
         float instantSpeed = Time.deltaTime > 0f ? delta.magnitude / Time.deltaTime : 0f;
         smoothedSpeed = Mathf.Lerp(smoothedSpeed, instantSpeed, speedSmoothing);
@@ -70,7 +69,7 @@ public class EnemyAnimator : MonoBehaviour
     {
         animator.SetTrigger("Die");
 
-        var chaser = GetComponent<EnemyChaser>();
+        var chaser = GetComponent<EnemyAIPathMover>();
         if (chaser != null)
             chaser.enabled = false;
 

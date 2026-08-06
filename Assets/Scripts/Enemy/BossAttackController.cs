@@ -198,6 +198,74 @@ public class BossAttackController : MonoBehaviour
         [System.NonSerialized] public bool isCasting;
     }
 
+    [System.Serializable]
+    public class CircleBulletPattern
+    {
+        [Tooltip("꺼두면 이 패턴은 발동하지 않는다. 탄막 패턴만 따로 테스트/디벨롭할 때 사용.")]
+        public bool enablePattern = true;
+
+        [Header("공통 설정")]
+        [Tooltip("공격 1회 종료 후 다음 시전까지의 쿨타임(초)")]
+        public float attackCooldown = 6f;
+        [Tooltip("투사체 1발당 데미지")]
+        public int attackDamage = 1;
+
+        [Header("탄막 설정")]
+        [Tooltip("보스 위치를 중심으로 360도에 균등하게 뿌려지는 투사체 개수")]
+        public int bulletCount = 24;
+        [Tooltip("투사체 이동 속도(월드 단위/초). 발사 시 투사체 프리팹의 기본 속도를 덮어쓴다.")]
+        public float bulletSpeed = 2.5f;
+        [Tooltip("발사될 투사체 프리팹 (RangedProjectile 컴포넌트를 포함해야 함, 예: Projectile_Ranged_Temp). " +
+            "Inspector에서 다른 프리팹으로 바로 교체할 수 있다.")]
+        public GameObject bulletPrefab;
+
+        [Header("Indicator 설정 - 뿌려지기 직전 보스 주변에 경고 원이 커진다")]
+        [Tooltip("꺼두면 경고 원(인디케이터)을 만들지 않고 예열 시간만 그대로 흐른 뒤 바로 탄막이 나간다 - " +
+            "기능 자체를 지운 게 아니라 시각 효과만 끈 것이라 언제든 다시 켤 수 있다.")]
+        public bool showWarmupIndicator = false;
+        [Tooltip("탄막이 뿌려지기 전 예열(차징) 시간(초)")]
+        public float warmupTime = 0.5f;
+        [Tooltip("경고 원의 최종 반지름(월드 단위)")]
+        public float warmupRadius = 1.4f;
+        public Color warmupStartColor = new Color(1f, 0.6f, 0.15f, 0.15f);
+        public Color warmupEndColor = new Color(1f, 0.4f, 0.05f, 0.6f);
+
+        [System.NonSerialized] public float cooldownRemaining;
+        [System.NonSerialized] public bool isCasting;
+    }
+
+    [System.Serializable]
+    public class SummonPattern
+    {
+        [Tooltip("꺼두면 이 패턴은 발동하지 않는다. 잡몹 소환 패턴만 따로 테스트/디벨롭할 때 사용.")]
+        public bool enablePattern = true;
+
+        [Header("공통 설정")]
+        [Tooltip("공격 1회 종료 후 다음 시전까지의 쿨타임(초)")]
+        public float attackCooldown = 10f;
+
+        [Header("소환 유닛")]
+        [Tooltip("소환할 잡몹 프리팹 (Health/Enemy 태그/2D 콜라이더를 갖추고 있어야 함, 예: 1_Ink_A)")]
+        public GameObject mobPrefab;
+        [Tooltip("한 번에 소환되는 잡몹 수")]
+        public int mobCount = 3;
+
+        [Header("소환 범위 설정 - 보스가 타겟을 바라보는 방향을 '전방'으로 삼아, 그 전방 기준 " +
+            "부채꼴 범위 안에서 소환 위치를 무작위로 고른다")]
+        [Tooltip("전방 기준 부채꼴 각도(도). 80이면 전방 좌우로 40도씩, 총 80도 범위 안에서 소환된다.")]
+        public float spawnAngle = 80f;
+        [Tooltip("보스와 겹치지 않도록 하는 최소 소환 거리(월드 단위)")]
+        public float minSpawnDistance = 1.8f;
+        [Tooltip("소환 가능한 최대 거리(월드 단위)")]
+        public float maxSpawnDistance = 5f;
+        [Tooltip("소환되는 잡몹들끼리 유지해야 하는 최소 간격(월드 단위) - 새로 뽑은 위치가 이미 " +
+            "소환된 다른 잡몹과 이보다 가까우면 재추첨한다(겹침 방지)")]
+        public float minSeparation = 1.2f;
+
+        [System.NonSerialized] public float cooldownRemaining;
+        [System.NonSerialized] public bool isCasting;
+    }
+
     [Header("패턴 1: 일직선 공격")]
     [SerializeField] private LinePattern linePattern = new LinePattern();
 
@@ -209,6 +277,12 @@ public class BossAttackController : MonoBehaviour
 
     [Header("패턴 4: 정사각형(다이아몬드) 투사체 공격")]
     [SerializeField] private SquarePattern squarePattern = new SquarePattern();
+
+    [Header("패턴 5: 탄막(원형 투사체) 공격 - UnityShotPatterns의 CircleShot을 이식")]
+    [SerializeField] private CircleBulletPattern circleBulletPattern = new CircleBulletPattern();
+
+    [Header("패턴 6: 잡몹 소환 공격")]
+    [SerializeField] private SummonPattern summonPattern = new SummonPattern();
 
     // 모든 패턴(일직선/낙하형/정사각형)이 공유하는 타겟 선택 방식. Auto는 기존 규칙(씬에
     // PriorityTarget=허수아비가 있으면 최우선, 없으면 플레이어) 그대로이고, Player/Scarecrow로
@@ -254,6 +328,8 @@ public class BossAttackController : MonoBehaviour
         TickCooldown(aoePattern);
         TickCooldown(meteorPattern);
         TickCooldown(squarePattern);
+        TickCooldown(circleBulletPattern);
+        TickCooldown(summonPattern);
 
         if (interAttackCooldownRemaining > 0f)
             interAttackCooldownRemaining -= Time.deltaTime;
@@ -284,15 +360,27 @@ public class BossAttackController : MonoBehaviour
         if (p.cooldownRemaining > 0f) p.cooldownRemaining -= Time.deltaTime;
     }
 
+    private void TickCooldown(CircleBulletPattern p)
+    {
+        if (p.cooldownRemaining > 0f) p.cooldownRemaining -= Time.deltaTime;
+    }
+
+    private void TickCooldown(SummonPattern p)
+    {
+        if (p.cooldownRemaining > 0f) p.cooldownRemaining -= Time.deltaTime;
+    }
+
     // 쿨타임이 다 된 패턴들을 모아 그중 하나를 무작위로 골라 시전한다 - 항상 같은 순서로
     // 나가지 않고 매번 랜덤하게 패턴이 나가도록 하기 위함.
     private void TryStartRandomPattern()
     {
-        var ready = new System.Collections.Generic.List<int>(4);
+        var ready = new System.Collections.Generic.List<int>(6);
         if (CanStartLine()) ready.Add(0);
         if (CanStartAoe()) ready.Add(1);
         if (CanStartMeteor()) ready.Add(2);
         if (CanStartSquare()) ready.Add(3);
+        if (CanStartCircleBullet()) ready.Add(4);
+        if (CanStartSummon()) ready.Add(5);
 
         if (ready.Count == 0)
             return;
@@ -303,6 +391,8 @@ public class BossAttackController : MonoBehaviour
             case 1: StartCoroutine(AoeCastRoutine(aoePattern)); break;
             case 2: StartCoroutine(MeteorCastRoutine(meteorPattern)); break;
             case 3: StartCoroutine(SquareCastRoutine(squarePattern)); break;
+            case 4: StartCoroutine(CircleBulletCastRoutine(circleBulletPattern)); break;
+            case 5: StartCoroutine(SummonCastRoutine(summonPattern)); break;
         }
     }
 
@@ -317,6 +407,14 @@ public class BossAttackController : MonoBehaviour
 
     private bool CanStartSquare() =>
         squarePattern.enablePattern && !squarePattern.isCasting && squarePattern.cooldownRemaining <= 0f && targetTransform != null;
+
+    private bool CanStartCircleBullet() =>
+        circleBulletPattern.enablePattern && !circleBulletPattern.isCasting && circleBulletPattern.cooldownRemaining <= 0f
+        && circleBulletPattern.bulletPrefab != null;
+
+    private bool CanStartSummon() =>
+        summonPattern.enablePattern && !summonPattern.isCasting && summonPattern.cooldownRemaining <= 0f
+        && summonPattern.mobPrefab != null && targetTransform != null;
 
     // 패턴 하나의 시전이 끝날 때 공통으로 호출한다 - 공유 잠금을 풀어주는 동시에, 다음 패턴이
     // 곧바로 이어서 나가지 않도록 공격 텀(interAttackDelay)을 시작시킨다.
@@ -483,7 +581,9 @@ public class BossAttackController : MonoBehaviour
         var hits = Physics2D.OverlapBoxAll(center, new Vector2(length, width), angle);
         foreach (var hit in hits)
         {
-            if (hit.CompareTag("Enemy"))
+            // Enemy(다른 보스/몬스터)뿐 아니라 Breakable(항아리 등 필드 오브젝트)도 보스 공격의
+            // 대상이 아니다 - 보스는 오직 플레이어(및 허수아비)만 노려야 한다.
+            if (hit.CompareTag("Enemy") || hit.CompareTag("Breakable"))
                 continue;
 
             var health = DamageUtil.ResolveHealth(hit);
@@ -599,8 +699,9 @@ public class BossAttackController : MonoBehaviour
         var hits = Physics2D.OverlapCircleAll(center, radius);
         foreach (var hit in hits)
         {
-            // 다른 적(자기 자신 포함, 둘 다 tag=Enemy)에게는 데미지를 주지 않는다.
-            if (hit.CompareTag("Enemy"))
+            // 다른 적(자기 자신 포함, 둘 다 tag=Enemy)과 Breakable(항아리 등 필드 오브젝트)에게는
+            // 데미지를 주지 않는다 - 보스 공격은 플레이어만 노려야 한다.
+            if (hit.CompareTag("Enemy") || hit.CompareTag("Breakable"))
                 continue;
 
             var health = DamageUtil.ResolveHealth(hit);
@@ -708,6 +809,149 @@ public class BossAttackController : MonoBehaviour
         hit.Initialize(p.attackDamage);
     }
 
+    // ===== 패턴 5: 탄막(원형 투사체) 공격 =====
+    // UnityShotPatterns-master(에셋)의 CircleShot 패턴을 이식한 것 - 360도를 bulletCount개로
+    // 균등 분할해 각 방향으로 투사체를 동시에 발사한다. 원본은 직접 만든 임시 Bullet로 움직임만
+    // 처리했지만, 여기서는 데미지 판정이 이미 갖춰진 기존 RangedProjectile(RangedAttacker가 쓰는
+    // 것과 동일)을 그대로 재사용해서 Health/Hurtbox 연동을 새로 만들 필요가 없게 했다.
+    private IEnumerator CircleBulletCastRoutine(CircleBulletPattern p)
+    {
+        p.isCasting = true;
+        isAnyPatternCasting = true;
+
+        yield return FireCircleBulletBurst(p, transform.position);
+
+        p.cooldownRemaining = p.attackCooldown;
+        p.isCasting = false;
+        EndCast();
+    }
+
+    // 탄막 버스트의 순수 발사 로직만 뽑아낸 버전 - 보스 자신의 패턴 잠금/쿨타임(isCasting,
+    // isAnyPatternCasting, EndCast)에는 전혀 관여하지 않는다. 패턴 6(잡몹 소환)이 소환한 잡몹이
+    // 죽을 때도 이 함수를 그대로 재사용해서 그 잡몹 위치에서 탄막을 터뜨리는데, 그때 보스의
+    // CircleBulletCastRoutine이 갖는 쿨타임/잠금 상태를 건드리면 안 되기 때문에 분리했다
+    // (여러 잡몹이 동시에 죽어도 서로의 isCasting을 덮어쓰는 경합이 생기지 않는다).
+    private IEnumerator FireCircleBulletBurst(CircleBulletPattern p, Vector3 center)
+    {
+        // 예열 - showWarmupIndicator가 켜져 있으면 경고 원이 0에서 warmupRadius까지 커지며
+        // "곧 사방으로 탄막이 뿌려진다"는 것을 알려준다. 꺼져 있으면 경고 원 없이 예열
+        // 시간(warmupTime)만 그대로 흐른 뒤 바로 탄막이 나간다 - 기능을 지운 게 아니라 시각
+        // 효과만 끈 것이라 showWarmupIndicator를 다시 켜면 그대로 복원된다.
+        GameObject warmupIndicator = null;
+        SpriteRenderer warmupRenderer = null;
+        if (p.showWarmupIndicator)
+        {
+            warmupIndicator = CreateCircleIndicator("CircleBulletWarmup", center, 0f, p.warmupStartColor, sortingOrder: 2);
+            warmupRenderer = warmupIndicator.GetComponent<SpriteRenderer>();
+        }
+
+        float elapsed = 0f;
+        while (elapsed < p.warmupTime)
+        {
+            elapsed += Time.deltaTime;
+            if (p.showWarmupIndicator)
+            {
+                float t = p.warmupTime > 0f ? Mathf.Clamp01(elapsed / p.warmupTime) : 1f;
+                warmupIndicator.transform.localScale = Vector3.one * (p.warmupRadius * 2f * t);
+                warmupRenderer.color = Color.Lerp(p.warmupStartColor, p.warmupEndColor, t);
+            }
+            yield return null;
+        }
+
+        if (warmupIndicator != null)
+            Destroy(warmupIndicator);
+
+        if (p.bulletPrefab == null)
+            yield break;
+
+        int count = Mathf.Max(1, p.bulletCount);
+        for (int i = 0; i < count; i++)
+        {
+            float angle = (360f / count) * i;
+            Vector2 direction = new Vector2(Mathf.Cos(angle * Mathf.Deg2Rad), Mathf.Sin(angle * Mathf.Deg2Rad));
+
+            GameObject bulletInstance = Instantiate(p.bulletPrefab, center, Quaternion.identity);
+            var projectile = bulletInstance.GetComponent<RangedProjectile>();
+            if (projectile != null)
+                projectile.Initialize(direction, p.attackDamage, p.bulletSpeed);
+        }
+    }
+
+    // ===== 패턴 6: 잡몹 소환 공격 =====
+
+    // 보스가 타겟을 바라보는 방향을 "전방"으로 삼아, 그 전방 기준 spawnAngle도 부채꼴 +
+    // [minSpawnDistance, maxSpawnDistance] 거리 범위(도넛 모양) 안에서 mobCount마리를 흩뿌려
+    // 소환한다. 소환된 잡몹이 죽으면(Health.OnDeath) 그 자리에서 패턴 5(탄막)가 그대로 재사용되어
+    // 터진다 - 보스 본체의 탄막 쿨타임과는 무관하게 항상 발동한다.
+    private IEnumerator SummonCastRoutine(SummonPattern p)
+    {
+        p.isCasting = true;
+        isAnyPatternCasting = true;
+
+        Vector2 forward = DirectionToTarget();
+        int count = Mathf.Max(1, p.mobCount);
+        var chosenPositions = new System.Collections.Generic.List<Vector3>(count);
+
+        for (int i = 0; i < count; i++)
+        {
+            Vector3 spawnPosition = FindSummonSpawnPosition(forward, p, chosenPositions);
+            chosenPositions.Add(spawnPosition);
+
+            GameObject mob = Instantiate(p.mobPrefab, spawnPosition, Quaternion.identity);
+            var mobHealth = mob.GetComponent<Health>();
+            if (mobHealth != null)
+            {
+                mobHealth.OnDeath += () => StartCoroutine(FireCircleBulletBurst(circleBulletPattern, mob.transform.position));
+            }
+        }
+
+        p.cooldownRemaining = p.attackCooldown;
+        p.isCasting = false;
+        EndCast();
+        yield break;
+    }
+
+    // 부채꼴+거리 범위 안에서 무작위 위치를 뽑되, 이미 이번에 소환한 다른 잡몹들과 minSeparation
+    // 이상 떨어질 때까지 재추첨한다(겹침 방지). maxAttempts를 넘기면(부채꼴이 너무 좁아 도저히
+    // 조건을 만족 못하는 경우) 마지막으로 뽑은 후보를 그냥 사용해 무한 루프를 막는다.
+    private Vector3 FindSummonSpawnPosition(Vector2 forward, SummonPattern p, System.Collections.Generic.List<Vector3> existing)
+    {
+        const int maxAttempts = 20;
+        Vector3 candidate = transform.position;
+
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            float angleOffset = Random.Range(-p.spawnAngle * 0.5f, p.spawnAngle * 0.5f);
+            float distance = Random.Range(p.minSpawnDistance, Mathf.Max(p.minSpawnDistance, p.maxSpawnDistance));
+            Vector2 spawnDirection = RotateVector(forward, angleOffset);
+            candidate = transform.position + (Vector3)(spawnDirection * distance);
+
+            bool tooClose = false;
+            for (int j = 0; j < existing.Count; j++)
+            {
+                if (Vector3.Distance(candidate, existing[j]) < p.minSeparation)
+                {
+                    tooClose = true;
+                    break;
+                }
+            }
+
+            if (!tooClose)
+                return candidate;
+        }
+
+        return candidate;
+    }
+
+    // 2D 벡터를 degrees만큼 반시계 방향으로 회전시킨다 - 소환 패턴의 "전방 기준 부채꼴" 방향 계산에 사용.
+    private Vector2 RotateVector(Vector2 v, float degrees)
+    {
+        float rad = degrees * Mathf.Deg2Rad;
+        float cos = Mathf.Cos(rad);
+        float sin = Mathf.Sin(rad);
+        return new Vector2(v.x * cos - v.y * sin, v.x * sin + v.y * cos);
+    }
+
     // 각 패턴의 범위/사거리를 Inspector에서 조절할 때 Scene 뷰에서 바로 확인할 수 있도록.
     private void OnDrawGizmosSelected()
     {
@@ -740,5 +984,35 @@ public class BossAttackController : MonoBehaviour
         Gizmos.DrawLine(right, bottom);
         Gizmos.DrawLine(bottom, left);
         Gizmos.DrawLine(left, top);
+
+        // 패턴 6: 잡몹 소환 범위 - 전방 기준 부채꼴(최소~최대 거리) 경계선
+        if (Application.isPlaying && targetTransform != null)
+        {
+            Vector2 forward = DirectionToTarget();
+            Vector2 leftEdge = RotateVector(forward, -summonPattern.spawnAngle * 0.5f);
+            Vector2 rightEdge = RotateVector(forward, summonPattern.spawnAngle * 0.5f);
+
+            Gizmos.color = new Color(0.2f, 0.6f, 1f, 0.6f);
+            Vector3 pos = transform.position;
+            Gizmos.DrawLine(pos + (Vector3)(leftEdge * summonPattern.minSpawnDistance), pos + (Vector3)(leftEdge * summonPattern.maxSpawnDistance));
+            Gizmos.DrawLine(pos + (Vector3)(rightEdge * summonPattern.maxSpawnDistance), pos + (Vector3)(rightEdge * summonPattern.minSpawnDistance));
+
+            const int arcSegments = 12;
+            for (int i = 0; i <= arcSegments; i++)
+            {
+                float t = (float)i / arcSegments;
+                float angle = Mathf.Lerp(-summonPattern.spawnAngle * 0.5f, summonPattern.spawnAngle * 0.5f, t);
+                Vector2 dir = RotateVector(forward, angle);
+                Vector3 innerPoint = pos + (Vector3)(dir * summonPattern.minSpawnDistance);
+                Vector3 outerPoint = pos + (Vector3)(dir * summonPattern.maxSpawnDistance);
+                if (i > 0)
+                {
+                    float prevAngle = Mathf.Lerp(-summonPattern.spawnAngle * 0.5f, summonPattern.spawnAngle * 0.5f, (float)(i - 1) / arcSegments);
+                    Vector2 prevDir = RotateVector(forward, prevAngle);
+                    Gizmos.DrawLine(pos + (Vector3)(prevDir * summonPattern.minSpawnDistance), innerPoint);
+                    Gizmos.DrawLine(pos + (Vector3)(prevDir * summonPattern.maxSpawnDistance), outerPoint);
+                }
+            }
+        }
     }
 }

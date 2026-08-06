@@ -108,8 +108,8 @@ public class CardAcquiredPopup : MonoBehaviour
         activeRoutine = StartCoroutine(ShowRoutine());
     }
 
-    /// <summary>일반 획득/강화는 카드 이름만, 인벤토리가 꽉 차 자동교체가 일어났을 때는
-    /// "대체 추천 카드: {밀려난 카드} > {새 카드}"로 무엇이 무엇으로 바뀌었는지 보여준다.</summary>
+    /// <summary>일반 획득/강화는 카드 이름만, 인벤토리가 꽉 차 플레이어가 직접 슬롯을 골라
+    /// 교체했을 때는 "{밀려난 카드} > {새 카드}"로 무엇이 무엇으로 바뀌었는지 보여준다.</summary>
     private static string BuildNameText(ItemData card, CardAcquireAction action, ItemData replacedCard)
     {
         switch (action)
@@ -118,7 +118,7 @@ public class CardAcquiredPopup : MonoBehaviour
                 return $"{card.itemName} (강화)";
             case CardAcquireAction.Replaced:
                 string replacedName = replacedCard != null ? replacedCard.itemName : "?";
-                return $"대체 추천 카드: {replacedName} > {card.itemName}";
+                return $"카드 교체: {replacedName} > {card.itemName}";
             default:
                 return card.itemName;
         }

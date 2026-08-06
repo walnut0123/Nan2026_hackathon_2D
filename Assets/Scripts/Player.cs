@@ -76,11 +76,11 @@ public class Player : MonoBehaviour
         SpawnUIOverlayEffect(screenPos);
     }
 
-    /// <summary>클릭한 화면 좌표를 월드 좌표로 변환해서 그 지점에 있는 콜라이더를 찾고, "Enemy" 또는
-    /// "Breakable" 태그면 CardAutoAttack의 우선 타겟으로 지정한다. "Breakable"(예: 깨지는 항아리)은
-    /// 의도적으로 CardAutoAttack.FindNearestTarget의 자동 스캔 대상("Enemy" 태그만 검사)에서는
-    /// 제외되어 있으므로, 전투 중 자동으로는 타겟이 되지 않고 플레이어가 직접 클릭했을 때만 여기서
-    /// 타겟으로 지정된다. 아무것도 없으면(빈 땅 클릭) 우선 타겟을 해제한다.</summary>
+    /// <summary>클릭한 화면 좌표를 월드 좌표로 변환해서 그 지점에 있는 콜라이더를 찾는다.
+    /// "Enemy"는 CardAutoAttack의 우선 타겟으로 지정해 진행 중인 자동 공격이 계속 그 적을
+    /// 집중 공격하게 한다. "Breakable"(예: 깨지는 항아리)은 우선 타겟으로 삼지 않고 - 진행 중인
+    /// Enemy 전투를 방해하지 않기 위해서다 - 그 대신 클릭한 자리에서 카드 딱 1장만 쿨타임 없이
+    /// 즉시 던진다(CardAutoAttack.FireSingleShotAt). 둘 다 아니면(빈 땅 클릭) 우선 타겟을 해제한다.</summary>
     private void TrySetClickedEnemyAsTarget(Vector2 screenPosition)
     {
         if (cardAutoAttack == null || Camera.main == null)
@@ -91,8 +91,18 @@ public class Player : MonoBehaviour
         worldPos.z = 0f;
 
         Collider2D hit = Physics2D.OverlapPoint(worldPos);
-        bool clickedTargetable = hit != null && (hit.CompareTag("Enemy") || hit.CompareTag("Breakable"));
 
+        if (hit != null && hit.CompareTag("Breakable"))
+        {
+            cardAutoAttack.FireSingleShotAt(hit.transform);
+
+            if (targetLockVfxPrefab != null)
+                Instantiate(targetLockVfxPrefab, hit.transform.position, Quaternion.identity, hit.transform);
+
+            return;
+        }
+
+        bool clickedTargetable = hit != null && hit.CompareTag("Enemy");
         cardAutoAttack.SetManualTarget(clickedTargetable ? hit.transform : null);
 
         if (clickedTargetable && targetLockVfxPrefab != null)

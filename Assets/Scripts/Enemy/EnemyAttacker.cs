@@ -25,7 +25,7 @@ public class EnemyAttacker : MonoBehaviour
     [SerializeField] private float hitDelay = 0.4f;
 
     private Animator animator;
-    private EnemyChaser chaser;
+    private EnemyAIPathMover chaser;
     private Transform playerTransform;
     private Health playerHealth;
 
@@ -46,7 +46,7 @@ public class EnemyAttacker : MonoBehaviour
     private void Awake()
     {
         animator = GetComponent<Animator>();
-        chaser = GetComponent<EnemyChaser>();
+        chaser = GetComponent<EnemyAIPathMover>();
     }
 
     private void Start()

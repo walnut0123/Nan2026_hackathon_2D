@@ -22,6 +22,13 @@ public class RoomEntryActivator : MonoBehaviour
 
     private void HandleEntered()
     {
+        // OnPlayerEnteredRoom은 재입장 때도 항상 발생한다(미니맵 등 다른 구독자를 위해) - 이
+        // 핸들러만 최초 입장(State가 아직 Idle일 때)에 한해 동작해야 한다. 그렇지 않으면 방을
+        // 클리어하고 나간 뒤 되돌아올 때마다(예: 보스룸을 지나 다음 맵으로 이동하며 방 경계를
+        // 다시 스치는 경우) 이미 죽어서 SetActive(false)된 보스 체력바를 여기서 다시 켜버린다.
+        if (room != null && room.State != RoomState.Idle)
+            return;
+
         if (targetToActivate != null)
             targetToActivate.SetActive(true);
     }

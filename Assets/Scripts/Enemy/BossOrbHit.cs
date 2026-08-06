@@ -27,7 +27,8 @@ public class BossOrbHit : MonoBehaviour
         if (formation != null && formation.HasHit)
             return;
 
-        if (other.CompareTag("Enemy"))
+        // Enemy(다른 적)뿐 아니라 Breakable(항아리 등 필드 오브젝트)도 보스 오브 판정에서 제외한다.
+        if (other.CompareTag("Enemy") || other.CompareTag("Breakable"))
             return;
 
         var health = DamageUtil.ResolveHealth(other);

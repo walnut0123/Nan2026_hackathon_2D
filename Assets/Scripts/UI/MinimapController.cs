@@ -32,6 +32,13 @@ public class MinimapController : MonoBehaviour
                 continue;
 
             entry.room.OnPlayerEnteredRoom += () => MoveToRoom(entry);
+
+            // lockOnStart 방(예: Map1)은 자신의 Start()에서 이미 NotifyPlayerEntered를 호출했을 수
+            // 있고, 스크립트 실행 순서상 그게 이 Start()보다 먼저 실행되면 위 구독 이전에 이벤트가
+            // 지나가버려 아이콘이 시작 방으로 이동하지 못한다. 이미 Idle을 벗어난(=입장 처리가 끝난)
+            // 방이 있으면 이벤트를 기다리지 않고 지금 바로 위치를 맞춘다.
+            if (entry.room.State != RoomState.Idle)
+                MoveToRoom(entry);
         }
     }
 

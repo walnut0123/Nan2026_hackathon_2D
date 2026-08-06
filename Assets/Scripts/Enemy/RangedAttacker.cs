@@ -24,7 +24,7 @@ public class RangedAttacker : MonoBehaviour
     [SerializeField] private GameObject projectilePrefab;
 
     private Animator animator;
-    private EnemyChaser chaser;
+    private EnemyAIPathMover chaser;
     private Transform targetTransform;
 
     private float cooldownRemaining;
@@ -35,7 +35,7 @@ public class RangedAttacker : MonoBehaviour
     private void Awake()
     {
         animator = GetComponent<Animator>();
-        chaser = GetComponent<EnemyChaser>();
+        chaser = GetComponent<EnemyAIPathMover>();
     }
 
     private void Start()

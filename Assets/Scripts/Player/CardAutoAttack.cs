@@ -179,14 +179,24 @@ public class CardAutoAttack : MonoBehaviour
     }
 
     /// <summary>
-    /// CardInventory.DrawCard로 카드 한 장을 뽑아 던집니다 (기본은 랜덤 투척, CardInventory의
-    /// useSequentialFire를 켜면 순차 발사로 전환 - CardDamageSystem.cs 5번 항목 참고).
-    /// 보유 카드가 하나도 없으면(수집 전 초반 상태 포함) 이번 발사는 아무 일도 하지 않습니다 -
-    /// "카드를 모아야 싸울 수 있다"는 설계 의도이므로 임의의 기본 무기로 대체하지 않습니다.
+    /// CardInventory.DrawCard로 카드 한 장을 뽑아 currentTarget에게 던집니다. ShootCardBurst
+    /// 코루틴(일반 자동 공격)이 매 프레임 호출하는 기본 진입점 - 실제 발사 로직은
+    /// ShootSingleCard(Transform)에 위임한다.
     /// </summary>
     private void ShootSingleCard()
     {
-        if (currentTarget == null)
+        ShootSingleCard(currentTarget);
+    }
+
+    /// <summary>
+    /// CardInventory.DrawCard로 카드 한 장을 뽑아 지정한 대상에게 던집니다 (기본은 랜덤 투척,
+    /// CardInventory의 useSequentialFire를 켜면 순차 발사로 전환 - CardDamageSystem.cs 5번 항목
+    /// 참고). 보유 카드가 하나도 없으면(수집 전 초반 상태 포함) 이번 발사는 아무 일도 하지 않습니다 -
+    /// "카드를 모아야 싸울 수 있다"는 설계 의도이므로 임의의 기본 무기로 대체하지 않습니다.
+    /// </summary>
+    private void ShootSingleCard(Transform target)
+    {
+        if (target == null)
             return;
 
         var inventory = CardInventory.Instance;
@@ -216,8 +226,17 @@ public class CardAutoAttack : MonoBehaviour
         CardProjectile projectile = cardInstance.GetComponent<CardProjectile>();
         if (projectile != null)
         {
-            projectile.Initialize(currentTarget, card, upgradeLevel, playerLevel, stageCoefficient);
+            projectile.Initialize(target, card, upgradeLevel, playerLevel, stageCoefficient);
         }
+    }
+
+    /// <summary>쿨타임/버스트를 전혀 거치지 않고 카드 딱 1장만 즉시 지정한 대상에게 던진다.
+    /// currentTarget/attackTimer 등 일반 자동 공격 상태는 건드리지 않으므로, 진행 중인 전투(적
+    /// 자동 타겟팅)를 방해하지 않고 항아리 같은 Breakable을 클릭했을 때 그 자리에서 즉시
+    /// 카드 1장만 반응하게 하는 용도다 (Player.TrySetClickedEnemyAsTarget에서 호출).</summary>
+    public void FireSingleShotAt(Transform target)
+    {
+        ShootSingleCard(target);
     }
 
     private void OnDrawGizmosSelected()

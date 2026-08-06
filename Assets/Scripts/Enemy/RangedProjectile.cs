@@ -17,11 +17,13 @@ public class RangedProjectile : MonoBehaviour
     private int damage;
     private float elapsed;
 
-    /// <summary>발사 시점에 방향과 데미지를 주입한다.</summary>
-    public void Initialize(Vector2 fireDirection, int attackDamage)
+    /// <summary>발사 시점에 방향과 데미지를 주입한다. overrideSpeed를 넘기면 프리팹 기본 속도 대신 사용한다.</summary>
+    public void Initialize(Vector2 fireDirection, int attackDamage, float? overrideSpeed = null)
     {
         direction = fireDirection.sqrMagnitude > 0.0001f ? fireDirection.normalized : Vector2.right;
         damage = attackDamage;
+        if (overrideSpeed.HasValue)
+            speed = overrideSpeed.Value;
 
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0f, 0f, angle);
@@ -38,8 +40,10 @@ public class RangedProjectile : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        // 다른 적이나 쏜 당사자 자신(둘 다 tag=Enemy)에게는 맞지 않는다.
-        if (other.CompareTag("Enemy"))
+        // 다른 적이나 쏜 당사자 자신(둘 다 tag=Enemy)에게는 맞지 않는다. Breakable(항아리 등 필드
+        // 오브젝트)도 제외한다 - 몬스터/보스의 원거리 공격이 아니라 오직 플레이어의 공격에만
+        // 파괴되어야 한다(BossAttackController/BossOrbHit의 데미지 판정과 동일한 규칙).
+        if (other.CompareTag("Enemy") || other.CompareTag("Breakable"))
             return;
 
         var health = DamageUtil.ResolveHealth(other);
