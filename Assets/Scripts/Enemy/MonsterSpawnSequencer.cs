@@ -83,6 +83,8 @@ public class MonsterSpawnSequencer : MonoBehaviour
         attacker = GetComponent<EnemyAttacker>() as Behaviour;
         if (attacker == null) attacker = GetComponent<RangedAttacker>();
         if (attacker == null) attacker = GetComponent<MobPeriodicBulletRing>();
+        if (attacker == null) attacker = GetComponent<RangedBurstAttacker>();
+        if (attacker == null) attacker = GetComponent<DashChargeAttacker>();
 
         originalScale = transform.localScale;
         if (spriteRenderer != null)

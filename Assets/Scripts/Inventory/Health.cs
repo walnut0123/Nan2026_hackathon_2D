@@ -45,6 +45,14 @@ public class Health : MonoBehaviour, IDamageable
         initialized = true;
     }
 
+    /// <summary>개발 테스트용: 최대 체력을 바꾸고 그만큼 완전 회복시킨다(예: 방 스킵용 체력 1 몬스터).</summary>
+    public void SetMaxHealthAndFullHeal(float value)
+    {
+        maxHealth = value;
+        currentHealth = value;
+        initialized = true;
+    }
+
     public void TakeDamage(float amount)
     {
         EnsureInitialized();
